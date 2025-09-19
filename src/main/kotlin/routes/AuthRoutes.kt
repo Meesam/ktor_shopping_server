@@ -29,7 +29,6 @@ fun Route.authRoutes(service: AuthService = AuthService()) {
         route("/register"){
             post {
                 val body = call.receive<UserRequest>()
-
                 val errors = BeanValidation.errorsFor(body)
                 if (errors.isNotEmpty()) {
                     call.respond(HttpStatusCode.UnprocessableEntity, mapOf("errors" to errors))

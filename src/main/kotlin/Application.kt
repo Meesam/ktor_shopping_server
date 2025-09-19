@@ -14,8 +14,8 @@ fun main(args: Array<String>) {
 
 fun Application.module() {
     DatabaseFactory.init(environment)
-    configureStatusPages()
     configureSerialization()
+    configureStatusPages()
     configureMonitoring()
     configureHTTP()
     configureRouting()

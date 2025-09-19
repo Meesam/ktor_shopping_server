@@ -1,14 +1,17 @@
 package com.meesam.domain.dto
 
+import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
+import java.time.LocalDate
+import java.time.LocalDateTime
 
 @Serializable
 data class UserResponse(
     val id: Long? = null,
     val name: String = "",
     val email: String = "",
-    val dob: String? = null,
-    val lastLoginAt: String? = null,
+    val dob: Instant? = null,
+    val lastLoginAt: Instant? = null,
     val role: String,
-    val profilePicUrl: String? = null,
+    val profilePicUrl: String? = null
 )

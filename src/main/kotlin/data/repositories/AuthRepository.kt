@@ -2,45 +2,51 @@ package com.meesam.data.repositories
 
 import com.meesam.data.db.DatabaseFactory.dbQuery
 import com.meesam.data.tables.UserTable
+import com.meesam.domain.dto.AuthenticationRequest
 import com.meesam.domain.dto.UserRequest
 import com.meesam.domain.dto.UserResponse
+import com.meesam.domain.exceptionhandler.ConflictException
 import de.mkammerer.argon2.Argon2Factory
-import org.jetbrains.exposed.sql.insert
+import io.ktor.server.plugins.NotFoundException
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.exposed.exceptions.ExposedSQLException
+import org.jetbrains.exposed.sql.insert
+import org.jetbrains.exposed.sql.selectAll
 
 
 class AuthRepository {
-   /* suspend fun login(email: String, password: String): UserResponse = dbQuery {
+    suspend fun login(authenticationRequest: AuthenticationRequest): UserResponse = dbQuery {
 
         // Normalize input
-        val normalizedEmail = email.trim().lowercase()
+        val normalizedEmail = authenticationRequest.email.trim().lowercase()
+
+       // val userResponse = UserTable.s
 
         // Fetch only what you need and at most one row
         val row = UserTable
-            .slice(UserTable.id, UserTable.password, UserTable.name, UserTable.email, UserTable.role)
-            .select { UserTable.email eq normalizedEmail }
+            //.slice(UserTable.id, UserTable.password, UserTable.name, UserTable.email, UserTable.role)
+            .selectAll()
+            .where { UserTable.email eq normalizedEmail }
             .limit(1)
-            .singleOrNull() ?: error("Invalid credentials")
+            .singleOrNull() ?: throw NotFoundException("Invalid credentials")
 
         val storedHash = row[UserTable.password]
-        Argon2Factory.create(Argon2Factory.Argon2Types.ARGON2id).use { argon2 ->
-            val ok = argon2.verify(storedHash, password.toCharArray())
-            if (!ok) error("Invalid credentials")
+        val argon2 = Argon2Factory.create(Argon2Factory.Argon2Types.ARGON2id)
+        try {
+            val ok = argon2.verify(storedHash, authenticationRequest.password.toCharArray())
+            if (!ok) throw NotFoundException("Invalid credentials")
+        } catch (e: Exception) {
+            throw e
         }
 
-        // Return whatever your domain expects; avoid leaking details
         UserResponse(
             id = row[UserTable.id],
             name = row[UserTable.name],
             email = row[UserTable.email],
             role = row[UserTable.role]
         )
-
-
-
-    }*/
+    }
 
     suspend fun register(userRequest: UserRequest): UserResponse = dbQuery {
         val argon2 = Argon2Factory.create(Argon2Factory.Argon2Types.ARGON2id)
@@ -66,7 +72,7 @@ class AuthRepository {
             )
         } catch (e: ExposedSQLException) {
             if (e.sqlState == "23505") {
-                throw IllegalArgumentException("Email already in use")
+                throw ConflictException("Email '${userRequest.email}' already exists")
             }
             throw e
         }

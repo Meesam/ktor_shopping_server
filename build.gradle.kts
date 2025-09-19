@@ -42,5 +42,7 @@ dependencies {
     implementation("org.jetbrains.exposed:exposed-kotlin-datetime:0.56.0")
     implementation("com.zaxxer:HikariCP:5.1.0")
     implementation("de.mkammerer:argon2-jvm:2.11")
-
+    implementation("org.hibernate.validator:hibernate-validator:8.0.1.Final")
+    implementation("org.glassfish:jakarta.el:4.0.2")
+    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
 }

@@ -1,6 +1,10 @@
 package com.meesam.domain.dto
 
+//import com.meesam.springshopping.model.ProductAttributes
+//import com.meesam.springshopping.model.ProductImages
+import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
+import java.time.LocalDateTime
 
 @Serializable
 data class ProductResponse(
@@ -11,7 +15,7 @@ data class ProductResponse(
     val categoryId: Long? = null,
     val categoryName: String = "",
     val quantity: Int = 0,
-    val createdAt: String? = null,
-    val productImages: List<ProductImagesResponse> = emptyList(),
-    val productAttributes: List<ProductAttributesResponse> = emptyList()
+    val createdAt: Instant,
+    //val productImages: List<ProductImages> = emptyList(),
+    //val productAttributes: List<ProductAttributes> = emptyList()
 )

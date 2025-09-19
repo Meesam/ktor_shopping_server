@@ -2,8 +2,6 @@ package com.meesam.domain.dto
 
 import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
-import java.time.LocalDate
-import java.time.LocalDateTime
 
 @Serializable
 data class UserResponse(

@@ -45,4 +45,6 @@ dependencies {
     implementation("org.hibernate.validator:hibernate-validator:8.0.1.Final")
     implementation("org.glassfish:jakarta.el:4.0.2")
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
+    implementation("com.auth0:java-jwt")
+    implementation("org.jetbrains.exposed:exposed-kotlin-datetime")
 }

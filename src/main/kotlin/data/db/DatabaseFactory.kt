@@ -6,6 +6,7 @@ import com.meesam.data.tables.CategoryTable
 import com.meesam.data.tables.ProductAttributesTable
 import com.meesam.data.tables.ProductImagesTable
 import com.meesam.data.tables.ProductTable
+import com.meesam.data.tables.RefreshTokensTable
 import com.meesam.data.tables.UserAddressTable
 import com.meesam.data.tables.UserCartTable
 import com.meesam.data.tables.UserFavProductTable
@@ -43,7 +44,8 @@ object DatabaseFactory {
                 ProductImagesTable,
                 UserAddressTable,
                 UserCartTable,
-                UserFavProductTable)
+                UserFavProductTable,
+                RefreshTokensTable)
         }
     }
 

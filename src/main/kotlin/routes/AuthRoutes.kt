@@ -1,17 +1,30 @@
 package com.meesam.routes
 
+import com.meesam.data.repositories.RefreshTokenRepository
 import com.meesam.domain.dto.AuthenticationRequest
+import com.meesam.domain.dto.LoginResponse
+import com.meesam.domain.dto.RefreshTokenRequest
+import com.meesam.domain.dto.TokenResponse
 import com.meesam.domain.dto.UserRequest
+import com.meesam.security.TokenService
 import com.meesam.services.AuthService
 import com.meesam.utills.BeanValidation
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.request.receive
+import io.ktor.server.request.receiveNullable
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.post
 import io.ktor.server.routing.route
 
 fun Route.authRoutes(service: AuthService = AuthService()) {
+    val refreshRepo = RefreshTokenRepository()
+    val jwtIssuer = environment.config.property("jwt.issuer").getString()
+    val jwtAudience = environment.config.property("jwt.audience").getString()
+    val jwtSecret = environment.config.property("jwt.secret").getString()
+    val tokenService = TokenService(jwtIssuer, jwtAudience, jwtSecret)
+
+
     route("/auth") {
         route("/register"){
             post {
@@ -35,9 +48,60 @@ fun Route.authRoutes(service: AuthService = AuthService()) {
                     call.respond(HttpStatusCode.UnprocessableEntity, mapOf("errors" to errors))
                     return@post
                 }
-                val result = service.login(body)
-                call.respond(HttpStatusCode.OK, result)
+                val user = service.login(body)
+                val access = tokenService.createAccessToken(user.id ?:0, user.role)
+                val refresh = tokenService.createRefreshToken(user.id ?: 0)
+                refreshRepo.save(refresh)
+                call.respond(HttpStatusCode.OK,
+                    LoginResponse(
+                        accessToken = access.token,
+                        accessTokenExpiresAt = access.expiresAt.toString(),
+                        refreshToken = refresh.token,
+                        refreshTokenExpiresAt = refresh.expiresAt.toString(),
+                        user = user
+                    )
+                )
             }
         }
+
+        route("/refresh"){
+            post {
+                val req = call.receive<RefreshTokenRequest>()
+                val stored = refreshRepo.findActiveByToken(req.token)
+                    ?: return@post call.respond(HttpStatusCode.Unauthorized, "Invalid refresh token")
+
+                // In case you need role, you can load it from DB by userId; omitted here for brevity
+                val access = tokenService.createAccessToken(stored.userId, role = null)
+                val newRefresh = tokenService.createRefreshToken(stored.userId)
+
+                // rotate: revoke the old token and save the new one
+                refreshRepo.revokeByJti(stored.jti, replacedBy = newRefresh.jti)
+                refreshRepo.save(newRefresh)
+
+                call.respond(HttpStatusCode.OK,
+                    TokenResponse(
+                        accessToken = access.token,
+                        accessTokenExpiresAt = access.expiresAt.toString(),
+                        refreshToken = newRefresh.token,
+                        refreshTokenExpiresAt = newRefresh.expiresAt.toString()
+                    )
+
+                )
+            }
+        }
+
+        route("/logout"){
+            post {
+                val req = call.receiveNullable<RefreshTokenRequest>()
+                req?.token?.let { rt ->
+                    val active = refreshRepo.findActiveByToken(rt)
+                    if (active != null) {
+                        refreshRepo.revokeByJti(active.jti)
+                    }
+                }
+                call.respond(HttpStatusCode.NoContent)
+            }
+        }
+
     }
 }

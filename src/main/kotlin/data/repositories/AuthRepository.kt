@@ -17,15 +17,8 @@ import org.jetbrains.exposed.sql.selectAll
 
 class AuthRepository {
     suspend fun login(authenticationRequest: AuthenticationRequest): UserResponse = dbQuery {
-
-        // Normalize input
         val normalizedEmail = authenticationRequest.email.trim().lowercase()
-
-       // val userResponse = UserTable.s
-
-        // Fetch only what you need and at most one row
         val row = UserTable
-            //.slice(UserTable.id, UserTable.password, UserTable.name, UserTable.email, UserTable.role)
             .selectAll()
             .where { UserTable.email eq normalizedEmail }
             .limit(1)
@@ -76,7 +69,6 @@ class AuthRepository {
             }
             throw e
         }
-
     }
 }
 

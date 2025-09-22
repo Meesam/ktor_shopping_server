@@ -1,6 +1,7 @@
 package com.meesam.data.repositories
 
 import com.meesam.data.db.DatabaseFactory.dbQuery
+import com.meesam.data.tables.OtpTable
 import com.meesam.data.tables.UserTable
 import com.meesam.domain.dto.AuthenticationRequest
 import com.meesam.domain.dto.ChangePasswordRequest
@@ -17,6 +18,8 @@ import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.kotlin.datetime.CurrentDateTime
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.update
+import kotlinx.datetime.Clock
+import kotlin.time.Duration.Companion.minutes
 
 
 class AuthRepository {
@@ -37,6 +40,13 @@ class AuthRepository {
             } else {
                 UserTable.update({ UserTable.email eq authenticationRequest.email.trim().lowercase() }) {
                     it[lastLoginAt] = CurrentDateTime
+                }
+
+                OtpTable.insert {
+                    it[userId] = row[UserTable.id]
+                    it[otp] = (100000..999999).random()
+                    it[email] = row[UserTable.email]
+                    it[expiresAt] = Clock.System.now() + 1.minutes
                 }
             }
         } catch (e: Exception) {
@@ -80,10 +90,12 @@ class AuthRepository {
         }
     }
 
-    suspend fun changePassword(passwordRequest: ChangePasswordRequest) = dbQuery {
+    suspend fun changePassword(passwordRequest: ChangePasswordRequest): Unit = dbQuery {
         val user =
             UserTable.selectAll().where { UserTable.email eq passwordRequest.email.trim().lowercase() }.singleOrNull()
                 ?: throw NotFoundException("Email ${passwordRequest.email} not found")
+
+        print(user.toString())
         val storedHash = user[UserTable.password]
         val argon2 = Argon2Factory.create(Argon2Factory.Argon2Types.ARGON2id)
         try {

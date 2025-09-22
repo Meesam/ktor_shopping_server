@@ -2,6 +2,7 @@ package com.meesam.plugins
 
 import com.meesam.routes.authRoutes
 import com.meesam.routes.categoryRoutes
+import com.meesam.routes.userRoutes
 import io.ktor.server.application.*
 import io.ktor.server.auth.authenticate
 import io.ktor.server.response.*
@@ -16,6 +17,7 @@ fun Application.configureRouting() {
             authRoutes()
             authenticate("auth-jwt") {
                 categoryRoutes()
+                userRoutes()
             }
 
         }

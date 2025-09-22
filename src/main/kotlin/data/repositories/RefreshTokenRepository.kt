@@ -19,6 +19,7 @@ data class RefreshTokenRecord(
     val id: Long,
     val tokenHash: String,
     val userId: Long,
+    val email: String,
     val jti: String,
     val expiresAt: Instant,
     val revokedAt: Instant?,
@@ -35,6 +36,7 @@ class RefreshTokenRepository {
         id = row[RefreshTokensTable.id],
         tokenHash = row[RefreshTokensTable.tokenHash],
         userId = row[RefreshTokensTable.userId],
+        email= row[RefreshTokensTable.email],
         jti = row[RefreshTokensTable.jti],
         expiresAt = row[RefreshTokensTable.expiresAt],
         revokedAt = row[RefreshTokensTable.revokedAt],
@@ -45,6 +47,7 @@ class RefreshTokenRepository {
         RefreshTokensTable.insert {
             it[tokenHash] = hash(plain.token)
             it[userId] = plain.userId
+            it[email] = plain.email
             it[jti] = plain.jti
             it[expiresAt] = plain.expiresAt.toKotlinInstant()
 
@@ -64,6 +67,7 @@ class RefreshTokenRepository {
                     RefreshTokensTable.revokedAt,
                     RefreshTokensTable.expiresAt,
                     RefreshTokensTable.userId,
+                    RefreshTokensTable.email,
                     RefreshTokensTable.jti,
                     RefreshTokensTable.replacedByJti,
                     RefreshTokensTable.createdAt,

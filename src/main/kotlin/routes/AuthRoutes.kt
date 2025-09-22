@@ -2,6 +2,7 @@ package com.meesam.routes
 
 import com.meesam.data.repositories.RefreshTokenRepository
 import com.meesam.domain.dto.AuthenticationRequest
+import com.meesam.domain.dto.ChangePasswordRequest
 import com.meesam.domain.dto.LoginResponse
 import com.meesam.domain.dto.RefreshTokenRequest
 import com.meesam.domain.dto.TokenResponse
@@ -48,8 +49,8 @@ fun Route.authRoutes(service: AuthService = AuthService()) {
                     return@post
                 }
                 val user = service.login(body)
-                val access = tokenService.createAccessToken(user.id ?:0, user.role)
-                val refresh = tokenService.createRefreshToken(user.id ?: 0)
+                val access = tokenService.createAccessToken(user.email, user.role)
+                val refresh = tokenService.createRefreshToken(user.id ?: 0, email = user.email)
                 refreshRepo.save(refresh)
                 call.respond(HttpStatusCode.OK,
                     LoginResponse(
@@ -70,8 +71,8 @@ fun Route.authRoutes(service: AuthService = AuthService()) {
                     ?: return@post call.respond(HttpStatusCode.Unauthorized, "Invalid refresh token")
 
                 // In case you need role, you can load it from DB by userId; omitted here for brevity
-                val access = tokenService.createAccessToken(stored.userId, role = null)
-                val newRefresh = tokenService.createRefreshToken(stored.userId)
+                val access = tokenService.createAccessToken(stored.email, role = null)
+                val newRefresh = tokenService.createRefreshToken(stored.userId, stored.email)
 
                 // rotate: revoke the old token and save the new one
                 refreshRepo.revokeByJti(stored.jti, replacedBy = newRefresh.jti)

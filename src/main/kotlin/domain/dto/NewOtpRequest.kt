@@ -1,15 +1,10 @@
 package com.meesam.domain.dto
 
 import jakarta.validation.constraints.Positive
-import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
 
-
 @Serializable
-data class UserUpdateRequest(
+data class NewOtpRequest(
     @field:Positive(message = "userId must be greater than zero")
-    val id: Long = 0,
-    val name: String?= "",
-    val dob: Instant? = null,
-    val profilePicUrl: String? = null
+    val userId: Long
 )

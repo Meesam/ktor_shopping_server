@@ -1,9 +1,10 @@
 package com.meesam.routes
 
 import com.meesam.data.repositories.RefreshTokenRepository
+import com.meesam.domain.dto.ActivateUserByOtpRequest
 import com.meesam.domain.dto.AuthenticationRequest
-import com.meesam.domain.dto.ChangePasswordRequest
 import com.meesam.domain.dto.LoginResponse
+import com.meesam.domain.dto.NewOtpRequest
 import com.meesam.domain.dto.RefreshTokenRequest
 import com.meesam.domain.dto.TokenResponse
 import com.meesam.domain.dto.UserRequest
@@ -100,6 +101,32 @@ fun Route.authRoutes(service: AuthService = AuthService()) {
                     }
                 }
                 call.respond(HttpStatusCode.NoContent)
+            }
+        }
+
+        route("/activateUserByOtp"){
+            post {
+                val body = call.receive<ActivateUserByOtpRequest>()
+                val errors = BeanValidation.errorsFor(body)
+                if (errors.isNotEmpty()) {
+                    call.respond(HttpStatusCode.UnprocessableEntity, mapOf("errors" to errors))
+                    return@post
+                }
+                service.activateUserByOtp(body)
+                call.respond(HttpStatusCode.OK, "User activated successfully")
+            }
+        }
+
+        route("/generateNewOtp"){
+            post {
+                val body = call.receive<NewOtpRequest>()
+                val errors = BeanValidation.errorsFor(body)
+                if (errors.isNotEmpty()) {
+                    call.respond(HttpStatusCode.UnprocessableEntity, mapOf("errors" to errors))
+                    return@post
+                }
+                val result = service.generateNewOtp(body)
+                call.respond(HttpStatusCode.Created, result)
             }
         }
 

@@ -19,8 +19,6 @@ fun Application.configureRouting() {
                 categoryRoutes()
                 userRoutes()
             }
-
         }
-
     }
 }

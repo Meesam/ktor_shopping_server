@@ -14,7 +14,7 @@ import io.ktor.server.routing.route
 
 fun Route.userRoutes(service: AuthService = AuthService()) {
     route("/user") {
-        route("/changePassword"){
+        route("/changePassword") {
             post {
                 val body = call.receive<ChangePasswordRequest>()
                 val errors = BeanValidation.errorsFor(body)
@@ -27,9 +27,10 @@ fun Route.userRoutes(service: AuthService = AuthService()) {
                 val tokenEmail = principal.payload.subject.trim().lowercase()
                 if (tokenEmail != targetEmail) {
                     call.respond(HttpStatusCode.Forbidden, "You are not allowed to change password of other users")
+                } else {
+                    service.changePassword(body)
+                    call.respond(HttpStatusCode.OK, "Password changed successfully")
                 }
-                service.changePassword(body)
-                call.respond(HttpStatusCode.OK, "Password changed successfully")
             }
         }
     }

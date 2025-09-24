@@ -3,7 +3,10 @@ package com.meesam.routes
 import com.meesam.domain.dto.CategoryRequest
 import com.meesam.services.CategoryService
 import com.meesam.utills.BeanValidation
+import com.meesam.utills.requireAdminOrRespond
 import io.ktor.http.HttpStatusCode
+import io.ktor.server.auth.jwt.JWTPrincipal
+import io.ktor.server.auth.principal
 import io.ktor.server.request.receive
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
@@ -17,6 +20,7 @@ fun Route.categoryRoutes(service: CategoryService = CategoryService()) {
     route("/category") {
         route("/create") {
             post {
+                call.requireAdminOrRespond() ?: return@post
                 val body = call.receive<CategoryRequest>()
                 val errors = BeanValidation.errorsFor(body)
                 if (errors.isNotEmpty()) {
@@ -30,6 +34,7 @@ fun Route.categoryRoutes(service: CategoryService = CategoryService()) {
 
         route("/update") {
             post {
+                call.requireAdminOrRespond() ?: return@post
                 val body = call.receive<CategoryRequest>()
                 val errors = BeanValidation.errorsFor(body)
                 if (errors.isNotEmpty()) {
@@ -38,31 +43,33 @@ fun Route.categoryRoutes(service: CategoryService = CategoryService()) {
                 }
                 val result = service.updateCategory(body)
                 call.respond(HttpStatusCode.OK, result)
+
             }
         }
 
-        route("/delete"){
+        route("/delete") {
             delete {
+                call.requireAdminOrRespond() ?: return@delete
                 val categoryId = call.request.queryParameters["categoryId"]?.toLongOrNull() ?: -1
                 val result = service.deleteCategory(categoryId)
                 call.respond(HttpStatusCode.OK, result)
+
             }
         }
 
-        route("/getAll"){
+        route("/getAll") {
             get {
                 val result = service.getAllCategory()
                 call.respond(HttpStatusCode.OK, result)
             }
         }
 
-        route("/get-by-id"){
+        route("/get-by-id") {
             get {
                 val categoryId = call.request.queryParameters["categoryId"]?.toLongOrNull() ?: -1
                 val result = service.getCategoryById(categoryId)
-                call.respond(status =  HttpStatusCode.OK, message = result ?: mapOf("message" to "Category not found"))
+                call.respond(status = HttpStatusCode.OK, message = result ?: mapOf("message" to "Category not found"))
             }
-
         }
     }
 }

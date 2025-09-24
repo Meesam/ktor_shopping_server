@@ -79,6 +79,7 @@ class CategoryRepository {
                 result?.let {
                     CategoryTable.update({ CategoryTable.id eq id }) {
                         it[title] = categoryRequest.title.trim()
+                        it[isActive] = categoryRequest.isActive ?: true
                     }
                 } ?: throw DomainException("Category not found")
             } ?: throw DomainException("Category Id is required")

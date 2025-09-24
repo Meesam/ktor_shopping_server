@@ -14,6 +14,8 @@ object UserTable : Table("users") {
     val profilePicUrl = varchar("profile_pic_url", 255).nullable()
     val password = varchar("password", 255)
     val role = varchar("role", 20)
+    val isActive = bool("is_active").default(true).nullable()
+    val isActivatedByOtp = bool("is_activated_by_otp").default(false).nullable()
     val createdAt = datetime("created_at").defaultExpression(CurrentDateTime)
     override val primaryKey = PrimaryKey(id)
 }

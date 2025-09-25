@@ -9,7 +9,6 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class NewOtpRequest(
     @field:Email(message = "email is not in correct format")
-    @field:Null(message = "email cannot be null")
     @field:NotBlank(message = "email cannot be blank")
     val email: String
 )

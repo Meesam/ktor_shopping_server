@@ -167,22 +167,24 @@ class AuthRepository {
 
     suspend fun generateNewOtp(newOtpRequest: NewOtpRequest): OtpResponse = dbQuery {
         try {
+
+            val normalizedEmail = newOtpRequest.email.trim().lowercase()
             val user = UserTable.selectAll().where {
-                UserTable.id eq newOtpRequest.userId
+                UserTable.email eq normalizedEmail
             }.singleOrNull()
-                ?: throw NotFoundException("UserId ${newOtpRequest.userId} not found")
+                ?: throw NotFoundException("User with ${newOtpRequest.email} not found")
 
             /* First Delete old expired OTP */
             with(OtpTable) {
                 deleteWhere {
-                    (email eq user[UserTable.email]) and
-                            (userId eq newOtpRequest.userId)
+                    (email eq normalizedEmail) and
+                            (userId eq user[UserTable.id])
                 }
                 /* Insert new OTP */
                 val insertedOtp = insert {
-                    it[userId] = newOtpRequest.userId
+                    it[userId] = user[UserTable.id]
                     it[otp] = generateOtp()
-                    it[email] = user[UserTable.email].trim().lowercase()
+                    it[email] = normalizedEmail
                     it[expiresAt] = Clock.System.now() + 5.minutes
                 }
 
@@ -190,7 +192,7 @@ class AuthRepository {
                     ?: throw DomainException("Failed to retrieve generated token for user")
 
                 OtpResponse(
-                    id = newOtpRequest.userId,
+                    email = normalizedEmail,
                     otp = otp,
                     otpSent = true
                 )

@@ -6,5 +6,5 @@ import kotlinx.serialization.Serializable
 data class OtpResponse(
     val otpSent: Boolean,
     val otp: Int,
-    val id: Long
+    val email:String
 )

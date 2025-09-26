@@ -36,7 +36,8 @@ class CategoryRepository {
                 CategoryResponse(
                     id = it[CategoryTable.id],
                     title = it[CategoryTable.title],
-                    createdAt = it[CategoryTable.createdAt]
+                    createdAt = it[CategoryTable.createdAt],
+                    isActive = it[CategoryTable.isActive]
                 )
             }
         } catch (e: ExposedSQLException) {
@@ -52,7 +53,8 @@ class CategoryRepository {
                 CategoryResponse(
                     id = it[CategoryTable.id],
                     title = it[CategoryTable.title],
-                    createdAt = it[CategoryTable.createdAt]
+                    createdAt = it[CategoryTable.createdAt],
+                    isActive = it[CategoryTable.isActive]
                 )
             }.singleOrNull()
         } catch (e: ExposedSQLException) {

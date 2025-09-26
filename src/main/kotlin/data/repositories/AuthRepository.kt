@@ -207,7 +207,7 @@ class AuthRepository {
 
     suspend fun getUserDetailById(userId: Long): UserResponse? = dbQuery {
         with(UserTable) {
-            val row = select(id, name, email, role, dob, lastLoginAt, createdAt).where { id eq userId }.singleOrNull()
+            val row = select(id, name, email, role, dob, lastLoginAt, createdAt,profilePicUrl).where { id eq userId }.singleOrNull()
                 ?: throw NotFoundException("User not found")
 
             UserResponse(

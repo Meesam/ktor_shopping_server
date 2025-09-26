@@ -6,5 +6,6 @@ import kotlinx.serialization.Serializable
 data class CategoryResponse(
     val id: Long? = null,
     val title: String = "",
-    val createdAt: kotlinx.datetime.LocalDateTime
+    val createdAt: kotlinx.datetime.LocalDateTime,
+    val isActive: Boolean
 )

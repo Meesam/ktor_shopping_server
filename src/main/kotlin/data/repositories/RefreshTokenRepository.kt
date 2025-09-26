@@ -10,9 +10,11 @@ import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.update
 import java.security.MessageDigest
 import com.meesam.security.RefreshTokenPlain
+import io.ktor.http.parameters
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.greater
 import org.jetbrains.exposed.sql.and
+import org.jetbrains.exposed.sql.deleteWhere
 
 
 data class RefreshTokenRecord(
@@ -44,13 +46,18 @@ class RefreshTokenRepository {
     )
 
     suspend fun save(plain: RefreshTokenPlain) = dbQuery {
-        RefreshTokensTable.insert {
-            it[tokenHash] = hash(plain.token)
-            it[userId] = plain.userId
-            it[email] = plain.email
-            it[jti] = plain.jti
-            it[expiresAt] = plain.expiresAt.toKotlinInstant()
-
+        /*Delete all refresh token of the user before creating a new one */
+        RefreshTokensTable.apply {
+            deleteWhere {
+                userId eq plain.userId
+            }
+            insert {
+                it[tokenHash] = hash(plain.token)
+                it[userId] = plain.userId
+                it[email] = plain.email
+                it[jti] = plain.jti
+                it[expiresAt] = plain.expiresAt.toKotlinInstant()
+            }
         }
     }
 
@@ -70,11 +77,13 @@ class RefreshTokenRepository {
                     RefreshTokensTable.email,
                     RefreshTokensTable.jti,
                     RefreshTokensTable.replacedByJti,
-                    RefreshTokensTable.createdAt,
+                    RefreshTokensTable.createdAt
+
+                ).where{
                     (RefreshTokensTable.tokenHash eq hashed) and
                             (RefreshTokensTable.revokedAt.isNull()) and
                             (RefreshTokensTable.expiresAt greater now)
-                )
+                }
                 .limit(1)
                 .singleOrNull()
                 ?.let(::toRecord)

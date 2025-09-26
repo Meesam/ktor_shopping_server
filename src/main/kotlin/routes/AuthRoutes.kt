@@ -74,6 +74,7 @@ fun Route.authRoutes(service: AuthService = AuthService()) {
                 // In case you need role, you can load it from DB by userId; omitted here for brevity
                 val access = tokenService.createAccessToken(stored.email, role = null)
                 val newRefresh = tokenService.createRefreshToken(stored.userId, stored.email)
+                val user = service.getUserDetailById(stored.userId)
 
                 // rotate: revoke the old token and save the new one
                 refreshRepo.revokeByJti(stored.jti, replacedBy = newRefresh.jti)
@@ -84,9 +85,9 @@ fun Route.authRoutes(service: AuthService = AuthService()) {
                         accessToken = access.token,
                         accessTokenExpiresAt = access.expiresAt.toString(),
                         refreshToken = newRefresh.token,
-                        refreshTokenExpiresAt = newRefresh.expiresAt.toString()
+                        refreshTokenExpiresAt = newRefresh.expiresAt.toString(),
+                        user = user
                     )
-
                 )
             }
         }

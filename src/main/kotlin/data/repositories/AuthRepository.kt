@@ -22,6 +22,7 @@ import org.jetbrains.exposed.sql.kotlin.datetime.CurrentDateTime
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.update
 import kotlinx.datetime.Clock
+import kotlinx.datetime.Instant
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.deleteWhere
@@ -42,15 +43,15 @@ class AuthRepository {
         with(UserTable) {
             /* Check for Active User */
             selectAll()
-            .where { (email eq normalizedEmail) and (isActivatedByOtp eq true) }
-            .limit(1)
-            .singleOrNull() ?: throw NotFoundException("Check your registered email and activate your account")
+                .where { (email eq normalizedEmail) and (isActivatedByOtp eq true) }
+                .limit(1)
+                .singleOrNull() ?: throw NotFoundException("Check your registered email and activate your account")
 
             val row =
                 selectAll()
-                .where { email eq normalizedEmail and (isActive eq true) }
-                .limit(1)
-                .singleOrNull() ?: throw NotFoundException("Invalid credentials or account are not active")
+                    .where { email eq normalizedEmail and (isActive eq true) }
+                    .limit(1)
+                    .singleOrNull() ?: throw NotFoundException("Invalid credentials or account are not active")
 
             val storedHash = row[password]
             val argon2 = Argon2Factory.create(Argon2Factory.Argon2Types.ARGON2id)
@@ -59,7 +60,7 @@ class AuthRepository {
                 if (!ok) {
                     throw NotFoundException("Invalid credentials")
                 } else {
-                    UserTable.update({email eq authenticationRequest.email.trim().lowercase() }) {
+                    UserTable.update({ email eq authenticationRequest.email.trim().lowercase() }) {
                         it[lastLoginAt] = CurrentDateTime
                     }
                 }
@@ -201,6 +202,22 @@ class AuthRepository {
             throw DomainException(ex.message.toString())
         } catch (e: Exception) {
             throw DomainException(e.message.toString())
+        }
+    }
+
+    suspend fun getUserDetailById(userId: Long): UserResponse? = dbQuery {
+        with(UserTable) {
+            val row = select(id, name, email, role, dob, lastLoginAt, createdAt).where { id eq userId }.singleOrNull()
+                ?: throw NotFoundException("User not found")
+
+            UserResponse(
+                id = row[id],
+                name = row[name],
+                email = row[email],
+                role = row[role],
+                //lastLoginAt = row[lastLoginAt] as Instant?,
+                profilePicUrl = row[profilePicUrl],
+            )
         }
     }
 }

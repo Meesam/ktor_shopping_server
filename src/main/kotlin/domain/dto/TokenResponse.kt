@@ -8,4 +8,5 @@ data class TokenResponse(
     val accessTokenExpiresAt: String,
     val refreshToken: String,
     val refreshTokenExpiresAt: String,
+    val user: UserResponse? = null
 )

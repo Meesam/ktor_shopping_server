@@ -14,12 +14,13 @@ import org.jetbrains.exposed.sql.update
 
 class CategoryRepository {
 
-    suspend fun createCategory(categoryRequest: CategoryRequest) = dbQuery {
+    suspend fun createCategory(categoryRequest: CategoryRequest):Unit = dbQuery {
         try {
             CategoryTable.insert {
                 it[title] = categoryRequest.title.trim()
             }
         } catch (e: ExposedSQLException) {
+          print(e.message.toString())
             if (e.sqlState == "23505") {
                 throw ConflictException("Category '${categoryRequest.title}' already exists")
             }

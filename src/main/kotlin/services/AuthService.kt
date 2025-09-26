@@ -33,4 +33,8 @@ private val authRepository: AuthRepository = AuthRepository()
         return authRepository.generateNewOtp(newOtpRequest)
     }
 
+    suspend fun getUserDetailById(userId: Long): UserResponse?{
+        return authRepository.getUserDetailById(userId)
+    }
+
 }

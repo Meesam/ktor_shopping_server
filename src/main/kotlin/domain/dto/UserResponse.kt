@@ -11,5 +11,5 @@ data class UserResponse(
     val dob: Instant? = null,
     val lastLoginAt: Instant? = null,
     val role: String,
-    val profilePicUrl: String? = null
+    val profilePicUrl: String? = null,
 )

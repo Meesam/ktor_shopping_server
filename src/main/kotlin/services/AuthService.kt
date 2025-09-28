@@ -4,6 +4,7 @@ import com.meesam.data.repositories.AuthRepository
 import com.meesam.domain.dto.ActivateUserByOtpRequest
 import com.meesam.domain.dto.AuthenticationRequest
 import com.meesam.domain.dto.ChangePasswordRequest
+import com.meesam.domain.dto.ForgotPasswordRequest
 import com.meesam.domain.dto.NewOtpRequest
 import com.meesam.domain.dto.OtpResponse
 import com.meesam.domain.dto.UserRequest
@@ -25,7 +26,11 @@ private val authRepository: AuthRepository = AuthRepository()
         return authRepository.changePassword(passwordRequest)
     }
 
-    suspend fun activateUserByOtp(activateUserByOtpRequest: ActivateUserByOtpRequest){
+    suspend fun forgotPassword(forgotPasswordRequest: ForgotPasswordRequest){
+        return authRepository.forgotPassword(forgotPasswordRequest)
+    }
+
+    suspend fun activateUserByOtp(activateUserByOtpRequest: ActivateUserByOtpRequest):Unit{
         return authRepository.activateUserByOtp(activateUserByOtpRequest)
     }
 

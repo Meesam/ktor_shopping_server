@@ -47,4 +47,5 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
     implementation("com.auth0:java-jwt")
     implementation("org.jetbrains.exposed:exposed-kotlin-datetime")
+    implementation("org.apache.commons:commons-email:1.5")
 }

@@ -3,6 +3,8 @@ package com.meesam.routes
 import com.meesam.data.repositories.RefreshTokenRepository
 import com.meesam.domain.dto.ActivateUserByOtpRequest
 import com.meesam.domain.dto.AuthenticationRequest
+import com.meesam.domain.dto.ChangePasswordRequest
+import com.meesam.domain.dto.ForgotPasswordRequest
 import com.meesam.domain.dto.LoginResponse
 import com.meesam.domain.dto.NewOtpRequest
 import com.meesam.domain.dto.RefreshTokenRequest
@@ -20,6 +22,8 @@ import io.ktor.server.routing.post
 import io.ktor.server.routing.route
 import io.ktor.http.Cookie
 import io.ktor.http.CookieEncoding
+import io.ktor.server.auth.jwt.JWTPrincipal
+import io.ktor.server.auth.principal
 import io.ktor.server.routing.RoutingCall
 
 fun Route.authRoutes(service: AuthService = AuthService()) {
@@ -93,24 +97,25 @@ fun Route.authRoutes(service: AuthService = AuthService()) {
                     return@post
                 }
                 val user = service.login(body)
-                val access = tokenService.createAccessToken(user.email, user.role)
-                val refresh = tokenService.createRefreshToken(user.id ?: 0, email = user.email)
-                refreshRepo.save(refresh)
-                val accessTtlSeconds = (access.expiresAt.epochSecond - java.time.Instant.now().epochSecond).coerceAtLeast(1)
-                val refreshTtlSeconds = (refresh.expiresAt.epochSecond - java.time.Instant.now().epochSecond).coerceAtLeast(1)
-                setAuthCookies(call=call, accessToken = access.token,
-                    accessMaxAgeSeconds = accessTtlSeconds, refreshToken = refresh.token, refreshMaxAgeSeconds = refreshTtlSeconds
-                )
-
-                call.respond(HttpStatusCode.OK,
-                    LoginResponse(
-                        accessToken = access.token,
-                        accessTokenExpiresAt = access.expiresAt.toString(),
-                        refreshToken = refresh.token,
-                        refreshTokenExpiresAt = refresh.expiresAt.toString(),
-                        user = user
+                user.let {
+                    val access = tokenService.createAccessToken(user.email, user.role)
+                    val refresh = tokenService.createRefreshToken(user.id ?: 0, email = user.email)
+                    refreshRepo.save(refresh)
+                    val accessTtlSeconds = (access.expiresAt.epochSecond - java.time.Instant.now().epochSecond).coerceAtLeast(1)
+                    val refreshTtlSeconds = (refresh.expiresAt.epochSecond - java.time.Instant.now().epochSecond).coerceAtLeast(1)
+                    setAuthCookies(call=call, accessToken = access.token,
+                        accessMaxAgeSeconds = accessTtlSeconds, refreshToken = refresh.token, refreshMaxAgeSeconds = refreshTtlSeconds
                     )
-                )
+                    call.respond(HttpStatusCode.OK,
+                        LoginResponse(
+                            accessToken = access.token,
+                            accessTokenExpiresAt = access.expiresAt.toString(),
+                            refreshToken = refresh.token,
+                            refreshTokenExpiresAt = refresh.expiresAt.toString(),
+                            user = user
+                        )
+                    )
+                }
             }
         }
 
@@ -185,6 +190,21 @@ fun Route.authRoutes(service: AuthService = AuthService()) {
                 call.respond(HttpStatusCode.Created, result)
             }
         }
+
+
+            route("/forgotPassword") {
+                post {
+                    val body = call.receive<ForgotPasswordRequest>()
+                    val errors = BeanValidation.errorsFor(body)
+                    if (errors.isNotEmpty()) {
+                        call.respond(HttpStatusCode.UnprocessableEntity, mapOf("errors" to errors))
+                        return@post
+                    }
+                    service.forgotPassword(body)
+                    call.respond(HttpStatusCode.OK, "Password changed successfully")
+                }
+            }
+
 
     }
 }

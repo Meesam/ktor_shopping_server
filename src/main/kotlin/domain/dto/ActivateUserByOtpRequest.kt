@@ -1,7 +1,9 @@
 package com.meesam.domain.dto
 
+import jakarta.validation.constraints.Email
 import jakarta.validation.constraints.Max
 import jakarta.validation.constraints.Min
+import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Positive
 import kotlinx.serialization.Serializable
 
@@ -12,6 +14,7 @@ data class ActivateUserByOtpRequest(
     @field:Max(999999)
     val otp: Int,
 
-    @field:Positive(message = "userId must be greater than zero")
-    val id: Long
+    @field:NotBlank(message = "email cannot be blank")
+    @field:Email(message = "invalid email address")
+    val email: String
 )

@@ -53,7 +53,7 @@ private fun getEmailConfig(): EmailConfig {
         smtpHost = "smtp.gmail.com",
         smtpPort = 465,
         username = "meesam.engineer@gmail.com",
-        password = "towk mxhj frdm qpwh", // **Important**: Use App Passwords for services like Gmail!
+        password = "", // **Important**: Use App Passwords for services like Gmail! stored in env
         senderEmail = "meesam.engineer@gmail.com",
         senderName = "Spring Shopping",
         useSSL = true,

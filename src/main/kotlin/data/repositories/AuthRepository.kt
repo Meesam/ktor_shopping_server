@@ -132,6 +132,8 @@ class AuthRepository {
                     subject = "OTP for activate account in Spring Shopping",
                     body = otp.toString()
                 )
+
+
                 sendSimpleEmail(emailDetails)
 
                 UserResponse(

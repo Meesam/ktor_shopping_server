@@ -7,11 +7,13 @@ import com.meesam.domain.dto.ChangePasswordRequest
 import com.meesam.domain.dto.ForgotPasswordRequest
 import com.meesam.domain.dto.NewOtpRequest
 import com.meesam.domain.dto.OtpResponse
+import com.meesam.domain.dto.ResetPasswordRequest
 import com.meesam.domain.dto.UserRequest
 import com.meesam.domain.dto.UserResponse
 
 class AuthService(
-private val authRepository: AuthRepository = AuthRepository()
+private val authRepository: AuthRepository = AuthRepository(),
+
 ) {
 
     suspend fun register(userRequest: UserRequest): UserResponse {
@@ -26,7 +28,11 @@ private val authRepository: AuthRepository = AuthRepository()
         return authRepository.changePassword(passwordRequest)
     }
 
-    suspend fun forgotPassword(forgotPasswordRequest: ForgotPasswordRequest){
+    suspend fun resetPassword(passwordRequest: ResetPasswordRequest):OtpResponse{
+        return authRepository.resetPassword(passwordRequest)
+    }
+
+    suspend fun forgotPassword(forgotPasswordRequest: ForgotPasswordRequest): String{
         return authRepository.forgotPassword(forgotPasswordRequest)
     }
 

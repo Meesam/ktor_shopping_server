@@ -7,6 +7,7 @@ import com.meesam.domain.exceptionhandler.DomainException
 import com.meesam.domain.exceptionhandler.InvalidCredentialsException
 import com.meesam.domain.exceptionhandler.InvalidOtpException
 import com.meesam.domain.exceptionhandler.OtpExpiredException
+import com.meesam.domain.exceptionhandler.RefreshTokenExpiredException
 import com.meesam.domain.exceptionhandler.ResourceNotFoundException
 import com.meesam.domain.exceptionhandler.ValidationException
 import io.ktor.http.*
@@ -44,6 +45,14 @@ fun Application.configureStatusPages() {
         exception<InvalidOtpException> { call, cause ->
             val responseStatus = HttpStatusCode.Unauthorized // 401
             val responseBody = ErrorResponse(cause.message ?: "OTP is invalid")
+            call.respond(responseStatus, responseBody)
+        }
+
+
+
+        exception<RefreshTokenExpiredException> { call, cause ->
+            val responseStatus = HttpStatusCode.Unauthorized // 401
+            val responseBody = ErrorResponse(cause.message ?: "Refresh token is expired")
             call.respond(responseStatus, responseBody)
         }
 

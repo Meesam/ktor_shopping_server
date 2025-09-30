@@ -11,3 +11,4 @@ class InvalidCredentialsException(message: String = "Invalid username or passwor
 class ActiveAccountException(message: String = "Check your registered email and activate your account.") : Exception(message)
 class OtpExpiredException(message: String = "OTP is expired.") : Exception(message)
 class InvalidOtpException(message: String = "OTP is invalid.") : Exception(message)
+class RefreshTokenExpiredException(message: String = "Refresh token is expired") : Exception(message)

@@ -28,7 +28,7 @@ class TokenService(
     issuer: String,
     audience: String,
     secret: String,
-    private val accessTtl: Duration = 15.minutes,
+    private val accessTtl: Duration = 1.minutes,
     private val refreshTtl: Duration = 14.days,
 ) {
     private val algorithm = Algorithm.HMAC256(secret)

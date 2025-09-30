@@ -143,40 +143,44 @@ fun Route.authRoutes(
 
         route("/refresh") {
             post {
-                val req = call.receive<RefreshTokenRequest>()
-                val stored = refreshRepo.findActiveByToken(req.token)
-                    ?: return@post call.respond(HttpStatusCode.Unauthorized, "Invalid refresh token")
+                val body = call.receive<RefreshTokenRequest>()
+                val errors = BeanValidation.errorsFor(body)
+                if (errors.isNotEmpty()) {
+                    call.respond(HttpStatusCode.UnprocessableEntity, mapOf("errors" to errors))
+                    return@post
+                }
+                val stored = refreshRepo.findActiveByToken(body.token)
+                stored?.let {
+                    val access = tokenService.createAccessToken(stored.email, role = null)
+                    val newRefresh = tokenService.createRefreshToken(stored.userId, stored.email)
+                    val user = service.getUserDetailById(stored.userId)
 
-                // In case you need role, you can load it from DB by userId; omitted here for brevity
-                val access = tokenService.createAccessToken(stored.email, role = null)
-                val newRefresh = tokenService.createRefreshToken(stored.userId, stored.email)
-                val user = service.getUserDetailById(stored.userId)
-
-                // rotate: revoke the old token and save the new one
-                refreshRepo.revokeByJti(stored.jti, replacedBy = newRefresh.jti)
-                refreshRepo.save(newRefresh)
-                val accessTtlSeconds =
-                    (access.expiresAt.epochSecond - java.time.Instant.now().epochSecond).coerceAtLeast(1)
-                val refreshTtlSeconds =
-                    (newRefresh.expiresAt.epochSecond - java.time.Instant.now().epochSecond).coerceAtLeast(1)
-                setAuthCookies(
-                    call = call,
-                    accessToken = access.token,
-                    accessMaxAgeSeconds = accessTtlSeconds,
-                    refreshToken = newRefresh.token,
-                    refreshMaxAgeSeconds = refreshTtlSeconds
-                )
-
-                call.respond(
-                    HttpStatusCode.OK,
-                    TokenResponse(
+                    // rotate: revoke the old token and save the new one
+                    refreshRepo.revokeByJti(stored.jti, replacedBy = newRefresh.jti)
+                    refreshRepo.save(newRefresh)
+                    val accessTtlSeconds =
+                        (access.expiresAt.epochSecond - java.time.Instant.now().epochSecond).coerceAtLeast(1)
+                    val refreshTtlSeconds =
+                        (newRefresh.expiresAt.epochSecond - java.time.Instant.now().epochSecond).coerceAtLeast(1)
+                    setAuthCookies(
+                        call = call,
                         accessToken = access.token,
-                        accessTokenExpiresAt = access.expiresAt.toString(),
+                        accessMaxAgeSeconds = accessTtlSeconds,
                         refreshToken = newRefresh.token,
-                        refreshTokenExpiresAt = newRefresh.expiresAt.toString(),
-                        user = user
+                        refreshMaxAgeSeconds = refreshTtlSeconds
                     )
-                )
+
+                    call.respond(
+                        HttpStatusCode.OK,
+                        TokenResponse(
+                            accessToken = access.token,
+                            accessTokenExpiresAt = access.expiresAt.toString(),
+                            refreshToken = newRefresh.token,
+                            refreshTokenExpiresAt = newRefresh.expiresAt.toString(),
+                            user = user
+                        )
+                    )
+                }
             }
         }
 

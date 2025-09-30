@@ -2,6 +2,7 @@ package com.meesam.data.repositories
 
 import com.meesam.data.db.DatabaseFactory.dbQuery
 import com.meesam.data.tables.RefreshTokensTable
+import com.meesam.domain.exceptionhandler.RefreshTokenExpiredException
 import kotlinx.datetime.Instant
 import kotlinx.datetime.toKotlinInstant
 import org.jetbrains.exposed.sql.ResultRow
@@ -87,6 +88,7 @@ class RefreshTokenRepository {
                 .limit(1)
                 .singleOrNull()
                 ?.let(::toRecord)
+                ?:throw RefreshTokenExpiredException()
 
         }
 

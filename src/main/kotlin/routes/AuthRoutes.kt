@@ -12,6 +12,7 @@ import com.meesam.domain.dto.ResetPasswordRequest
 import com.meesam.domain.dto.TokenResponse
 import com.meesam.domain.dto.UserRequest
 import com.meesam.plugins.EmailServiceKey
+import com.meesam.security.RefreshTokenPlain
 import com.meesam.security.TokenService
 import com.meesam.services.AuthService
 import com.meesam.services.EmailDetails
@@ -28,6 +29,8 @@ import io.ktor.http.Cookie
 import io.ktor.http.CookieEncoding
 import io.ktor.server.routing.RoutingCall
 import io.ktor.server.routing.application
+import kotlinx.datetime.toKotlinInstant
+import java.time.Instant
 
 
 fun Route.authRoutes(
@@ -117,9 +120,9 @@ fun Route.authRoutes(
                     val refresh = tokenService.createRefreshToken(user.id ?: 0, email = user.email)
                     refreshRepo.save(refresh)
                     val accessTtlSeconds =
-                        (access.expiresAt.epochSecond - java.time.Instant.now().epochSecond).coerceAtLeast(1)
+                        (access.expiresAt.epochSecond - Instant.now().epochSecond).coerceAtLeast(1)
                     val refreshTtlSeconds =
-                        (refresh.expiresAt.epochSecond - java.time.Instant.now().epochSecond).coerceAtLeast(1)
+                        (refresh.expiresAt.epochSecond - Instant.now().epochSecond).coerceAtLeast(1)
                     setAuthCookies(
                         call = call,
                         accessToken = access.token,
@@ -150,26 +153,28 @@ fun Route.authRoutes(
                     return@post
                 }
                 val stored = refreshRepo.findActiveByToken(body.token)
+
                 stored?.let {
-                    val access = tokenService.createAccessToken(stored.email, role = null)
-                    val newRefresh = tokenService.createRefreshToken(stored.userId, stored.email)
                     val user = service.getUserDetailById(stored.userId)
+                    val access = tokenService.createAccessToken(stored.email, role = user?.role)
+                    /*Check if refresh token is expired then only generate a new refresh token also token*/
+                    val isRefreshTokenExpired = refreshRepo.checkIfRefreshTokenIsExpired(body.token)
+                    var newRefresh:  RefreshTokenPlain
+                    if(isRefreshTokenExpired){
+                        newRefresh =  tokenService.createRefreshToken(stored.userId, stored.email)
+                        // rotate: revoke the old token and save the new one
+                        refreshRepo.revokeByJti(stored.jti, replacedBy = newRefresh.jti)
+                        refreshRepo.save(newRefresh)
 
-                    // rotate: revoke the old token and save the new one
-                    refreshRepo.revokeByJti(stored.jti, replacedBy = newRefresh.jti)
-                    refreshRepo.save(newRefresh)
-                    val accessTtlSeconds =
-                        (access.expiresAt.epochSecond - java.time.Instant.now().epochSecond).coerceAtLeast(1)
-                    val refreshTtlSeconds =
-                        (newRefresh.expiresAt.epochSecond - java.time.Instant.now().epochSecond).coerceAtLeast(1)
-                    setAuthCookies(
-                        call = call,
-                        accessToken = access.token,
-                        accessMaxAgeSeconds = accessTtlSeconds,
-                        refreshToken = newRefresh.token,
-                        refreshMaxAgeSeconds = refreshTtlSeconds
-                    )
-
+                    }else {
+                        newRefresh = RefreshTokenPlain(
+                            token = body.token,
+                            userId = it.userId,
+                            email = it.email,
+                            jti = it.jti,
+                            expiresAt = it.expiresAt.toKotlinInstant()
+                        )
+                    }
                     call.respond(
                         HttpStatusCode.OK,
                         TokenResponse(

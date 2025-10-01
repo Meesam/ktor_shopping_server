@@ -113,6 +113,18 @@ class RefreshTokenRepository {
             it[revokedAt] = whenTs
         }
     }
+
+    suspend fun checkIfRefreshTokenIsExpired(
+        refreshToken: String,
+        now: Instant = Instant.fromEpochMilliseconds(System.currentTimeMillis())
+    ): Boolean = dbQuery {
+        val hashed = hash(refreshToken)
+        RefreshTokensTable.select(RefreshTokensTable.expiresAt)
+            .where { (RefreshTokensTable.tokenHash eq hashed) and (RefreshTokensTable.expiresAt greater now) }
+            .limit(1)
+            .singleOrNull()
+            ?.let { true } ?: false
+    }
 }
 
 

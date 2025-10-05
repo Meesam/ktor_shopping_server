@@ -1,7 +1,11 @@
 package com.meesam.data.repositories
 
 import com.meesam.data.db.DatabaseFactory.dbQuery
+import com.meesam.data.tables.OtpTable.email
+import com.meesam.data.tables.OtpTable.userId
 import com.meesam.data.tables.RefreshTokensTable
+import com.meesam.data.tables.UserTable
+import com.meesam.domain.exceptionhandler.DomainException
 import com.meesam.domain.exceptionhandler.RefreshTokenExpiredException
 import kotlinx.datetime.Instant
 import kotlinx.datetime.toKotlinInstant
@@ -39,7 +43,7 @@ class RefreshTokenRepository {
         id = row[RefreshTokensTable.id],
         tokenHash = row[RefreshTokensTable.tokenHash],
         userId = row[RefreshTokensTable.userId],
-        email= row[RefreshTokensTable.email],
+        email = row[RefreshTokensTable.email],
         jti = row[RefreshTokensTable.jti],
         expiresAt = row[RefreshTokensTable.expiresAt],
         revokedAt = row[RefreshTokensTable.revokedAt],
@@ -80,7 +84,7 @@ class RefreshTokenRepository {
                     RefreshTokensTable.replacedByJti,
                     RefreshTokensTable.createdAt
 
-                ).where{
+                ).where {
                     (RefreshTokensTable.tokenHash eq hashed) and
                             (RefreshTokensTable.revokedAt.isNull()) and
                             (RefreshTokensTable.expiresAt greater now)
@@ -88,7 +92,7 @@ class RefreshTokenRepository {
                 .limit(1)
                 .singleOrNull()
                 ?.let(::toRecord)
-                ?:throw RefreshTokenExpiredException()
+                ?: throw RefreshTokenExpiredException()
 
         }
 
@@ -101,6 +105,20 @@ class RefreshTokenRepository {
             it[revokedAt] = whenTs
             it[replacedByJti] = replacedBy
         }
+    }
+
+    suspend fun deleteRefreshToken(
+        refreshToken: String,
+    ) = dbQuery {
+        try {
+            val hashed = hash(refreshToken)
+            RefreshTokensTable.deleteWhere {
+                (RefreshTokensTable.tokenHash eq hashed)
+            }
+        } catch (e: Exception) {
+            throw DomainException(e.message.toString())
+        }
+
     }
 
     suspend fun revokeAllForUser(

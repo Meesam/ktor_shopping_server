@@ -3,7 +3,6 @@ package com.meesam.routes
 import com.meesam.data.repositories.RefreshTokenRepository
 import com.meesam.domain.dto.ActivateUserByOtpRequest
 import com.meesam.domain.dto.AuthenticationRequest
-import com.meesam.domain.dto.ChangePasswordRequest
 import com.meesam.domain.dto.ForgotPasswordRequest
 import com.meesam.domain.dto.LoginResponse
 import com.meesam.domain.dto.NewOtpRequest
@@ -25,12 +24,8 @@ import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.post
 import io.ktor.server.routing.route
-import io.ktor.http.Cookie
-import io.ktor.http.CookieEncoding
-import io.ktor.server.routing.RoutingCall
 import io.ktor.server.routing.application
-import kotlinx.datetime.toKotlinInstant
-import java.time.Instant
+import kotlinx.datetime.toJavaInstant
 
 
 fun Route.authRoutes(
@@ -43,46 +38,6 @@ fun Route.authRoutes(
     val jwtSecret = environment.config.property("jwt.secret").getString()
     val tokenService = TokenService(jwtIssuer, jwtAudience, jwtSecret)
     val emailService: EmailService = application.attributes[EmailServiceKey]
-
-    fun setAuthCookies(
-        accessToken: String,
-        accessMaxAgeSeconds: Long,
-        refreshToken: String,
-        refreshMaxAgeSeconds: Long,
-        call: RoutingCall
-    ) {
-        call.response.cookies.append(
-            Cookie(
-                name = "access_token",
-                value = accessToken,
-                httpOnly = true,
-                secure = false, // set false only for local HTTP testing
-                path = "/",
-                maxAge = accessMaxAgeSeconds.toInt(),
-                encoding = CookieEncoding.RAW
-            )
-        )
-        call.response.cookies.append(
-            Cookie(
-                name = "refresh_token",
-                value = refreshToken,
-                httpOnly = true,
-                secure = false,
-                path = "/",
-                maxAge = refreshMaxAgeSeconds.toInt(),
-                encoding = CookieEncoding.RAW
-            )
-        )
-    }
-
-    fun clearAuthCookies(call: RoutingCall) {
-        call.response.cookies.append(
-            Cookie(name = "access_token", value = "", maxAge = 0, path = "/", httpOnly = true, secure = true)
-        )
-        call.response.cookies.append(
-            Cookie(name = "refresh_token", value = "", maxAge = 0, path = "/", httpOnly = true, secure = true)
-        )
-    }
 
 
     route("/auth") {
@@ -119,17 +74,7 @@ fun Route.authRoutes(
                     val access = tokenService.createAccessToken(user.email, user.role)
                     val refresh = tokenService.createRefreshToken(user.id ?: 0, email = user.email)
                     refreshRepo.save(refresh)
-                    val accessTtlSeconds =
-                        (access.expiresAt.epochSecond - Instant.now().epochSecond).coerceAtLeast(1)
-                    val refreshTtlSeconds =
-                        (refresh.expiresAt.epochSecond - Instant.now().epochSecond).coerceAtLeast(1)
-                    setAuthCookies(
-                        call = call,
-                        accessToken = access.token,
-                        accessMaxAgeSeconds = accessTtlSeconds,
-                        refreshToken = refresh.token,
-                        refreshMaxAgeSeconds = refreshTtlSeconds
-                    )
+
                     call.respond(
                         HttpStatusCode.OK,
                         LoginResponse(
@@ -160,19 +105,18 @@ fun Route.authRoutes(
                     /*Check if refresh token is expired then only generate a new refresh token also token*/
                     val isRefreshTokenExpired = refreshRepo.checkIfRefreshTokenIsExpired(body.token)
                     var newRefresh:  RefreshTokenPlain
-                    if(isRefreshTokenExpired){
+                    if(!isRefreshTokenExpired){
                         newRefresh =  tokenService.createRefreshToken(stored.userId, stored.email)
                         // rotate: revoke the old token and save the new one
                         refreshRepo.revokeByJti(stored.jti, replacedBy = newRefresh.jti)
                         refreshRepo.save(newRefresh)
-
                     }else {
                         newRefresh = RefreshTokenPlain(
                             token = body.token,
                             userId = it.userId,
                             email = it.email,
                             jti = it.jti,
-                            expiresAt = it.expiresAt.toKotlinInstant()
+                            expiresAt = it.expiresAt.toJavaInstant()
                         )
                     }
                     call.respond(
@@ -195,7 +139,7 @@ fun Route.authRoutes(
                 req?.token?.let { rt ->
                     val active = refreshRepo.findActiveByToken(rt)
                     if (active != null) {
-                        refreshRepo.revokeByJti(active.jti)
+                        refreshRepo.deleteRefreshToken(rt)
                     }
                 }
                 call.respond(HttpStatusCode.NoContent)

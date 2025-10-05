@@ -7,7 +7,10 @@ import jakarta.validation.constraints.Size
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class ProductAttributeRequest(
+data class UpdateProductAttributeRequest(
+    @field:Min(value = 1, message = "Product attribute id must be greater than zero")
+    val id: Long,
+
     @field:Min(value = 1, message = "productId must be greater than zero")
     val productId: Long = 0,
 

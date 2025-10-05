@@ -2,6 +2,7 @@ package com.meesam
 
 import com.meesam.data.db.DatabaseFactory
 import com.meesam.plugins.EmailServiceKey
+import com.meesam.plugins.configureFirebase
 import com.meesam.plugins.configureHTTP
 import com.meesam.plugins.configureMonitoring
 import com.meesam.plugins.configureRouting
@@ -10,6 +11,7 @@ import com.meesam.plugins.configureSerialization
 import com.meesam.plugins.configureStatusPages
 import com.meesam.plugins.loadEmailConfig
 import com.meesam.services.EmailService
+import io.ktor.http.ContentType
 import io.ktor.server.application.*
 
 fun main(args: Array<String>) {
@@ -26,5 +28,8 @@ fun Application.module() {
     configureMonitoring()
     configureHTTP()
     configureSecurity()
+    configureFirebase()
     configureRouting()
 }
+
+

@@ -11,6 +11,7 @@ object ProductAttributesTable: Table("product_attributes") {
     val attributeId = long("attribute_id").references(AttributeTable.id)
     val value = varchar("value", 255)
     val price = double("price").nullable()
+    val quantity = integer("quantity").nullable()
     val createdAt = datetime("created_at").defaultExpression(CurrentDateTime)
     override val primaryKey = PrimaryKey(id)
 }

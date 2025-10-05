@@ -1,7 +1,6 @@
 package com.meesam.domain.dto
 
 import jakarta.validation.constraints.Positive
-import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
 
 
@@ -10,6 +9,6 @@ data class UserUpdateRequest(
     @field:Positive(message = "userId must be greater than zero")
     val id: Long = 0,
     val name: String?= "",
-    val dob: Instant? = null,
+    val dob: kotlinx.datetime.LocalDate? = null,
     val profilePicUrl: String? = null
 )

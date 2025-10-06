@@ -40,7 +40,7 @@ class ProductRepository {
                 }
             }
         } catch (e: ResourceNotFoundException) {
-            throw ResourceNotFoundException("Category not found")
+            throw ResourceNotFoundException(e.message.toString())
         } catch (e: ExposedSQLException) {
             throw DomainException(e.message.toString())
         } catch (e: Exception) {
@@ -146,7 +146,7 @@ class ProductRepository {
                     ProductTable.isActive,
                     CategoryTable.title
                 )
-                .where { CategoryTable.isActive eq true }
+                .where { CategoryTable.isActive eq true and (CategoryTable.id eq productId) }
                 .map {
                     ProductResponse(
                         id = it[ProductTable.id],

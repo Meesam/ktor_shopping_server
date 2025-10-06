@@ -1,8 +1,9 @@
 package com.meesam.domain.dto
 
-import kotlinx.datetime.Instant
+
+import kotlinx.datetime.LocalDateTime
 import kotlinx.serialization.Serializable
-import java.time.LocalDateTime
+
 
 @Serializable
 data class UserAddressResponse(
@@ -16,5 +17,5 @@ data class UserAddressResponse(
     val country:String? = null,
     val userId: Long? = null,
     val userName:String = "",
-    val createdAt: Instant
+    val createdAt: LocalDateTime? = null
 )

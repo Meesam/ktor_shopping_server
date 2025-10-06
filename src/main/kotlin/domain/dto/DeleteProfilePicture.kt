@@ -3,12 +3,9 @@ package com.meesam.domain.dto
 import jakarta.validation.constraints.Positive
 import kotlinx.serialization.Serializable
 
-
 @Serializable
-data class UserUpdateRequest(
+data class DeleteProfilePictureRequest(
     @field:Positive(message = "userId must be greater than zero")
     val id: Long = 0,
-    val name: String? = null,
-    val dob: kotlinx.datetime.LocalDate? = null,
     val profilePicUrl: String? = null
 )

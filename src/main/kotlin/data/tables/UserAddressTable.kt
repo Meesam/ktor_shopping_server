@@ -15,7 +15,7 @@ object UserAddressTable : Table("user_addresses") {
     val state = varchar("state", 255)
     val country = varchar("country", 150)
     val zipCode = varchar("zip_code", 50)
-    val nearBy = varchar("nearBy", 255)
+    val nearBy = varchar("nearBy", 255).nullable()
     val comment = varchar("comment", 255).nullable()
     val isPrimary = bool("is_primary").default(false)
     val userId = long("user_id").references(UserTable.id, onDelete = ReferenceOption.CASCADE).index()

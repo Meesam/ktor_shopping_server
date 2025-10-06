@@ -2,6 +2,8 @@ package com.meesam.services
 
 import com.meesam.data.repositories.UserRepository
 import com.meesam.domain.dto.DeleteProfilePictureRequest
+import com.meesam.domain.dto.UpdateUserAddressRequest
+import com.meesam.domain.dto.UserAddressRequest
 import com.meesam.domain.dto.UserResponse
 import com.meesam.domain.dto.UserUpdateRequest
 import com.meesam.domain.exceptionhandler.DomainException
@@ -62,5 +64,17 @@ class UserService(
             throw DomainException(ex.message.toString())
         }
         return null
+    }
+
+    suspend fun addUserAddress(userAddressRequest: UserAddressRequest): Unit{
+        return userRepository.addUserAddress(userAddressRequest)
+    }
+
+    suspend fun deleteUserAddress(addressId: Long):Unit{
+        return userRepository.deleteUserAddress(addressId)
+    }
+
+    suspend fun updateUserAddress(userAddressRequest: UpdateUserAddressRequest): Unit{
+        return userRepository.updateUserAddress(userAddressRequest)
     }
 }

@@ -3,13 +3,16 @@ package com.meesam.data.repositories
 import com.meesam.data.db.DatabaseFactory.dbQuery
 import com.meesam.data.tables.UserAddressTable
 import com.meesam.data.tables.UserTable
+import com.meesam.domain.dto.UpdateUserAddressRequest
 import com.meesam.domain.dto.UserAddressRequest
 import com.meesam.domain.dto.UserResponse
 import com.meesam.domain.dto.UserUpdateRequest
 import com.meesam.domain.exceptionhandler.DomainException
 import com.meesam.domain.exceptionhandler.ResourceNotFoundException
 import org.jetbrains.exposed.exceptions.ExposedSQLException
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.and
+import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.update
@@ -113,8 +116,6 @@ class UserRepository {
                 it[comment] = userAddressRequest.comment
                 it[isPrimary] = userAddressRequest.isPrimary
             }
-
-
         }catch (ex: ResourceNotFoundException) {
             throw ResourceNotFoundException(ex.message.toString())
         } catch (ex: ExposedSQLException) {
@@ -125,6 +126,48 @@ class UserRepository {
     }
 
     suspend fun deleteUserAddress(addressId: Long):Unit = dbQuery {
-
+        try {
+            UserAddressTable.select(UserAddressTable.id).where { UserAddressTable.id eq addressId }
+                .singleOrNull()
+                ?: throw ResourceNotFoundException("Address not found")
+            UserAddressTable.deleteWhere {
+                UserAddressTable.id eq addressId
+            }
+        }catch (ex: ResourceNotFoundException) {
+            throw ResourceNotFoundException(ex.message.toString())
+        } catch (ex: ExposedSQLException) {
+            throw DomainException(ex.message.toString())
+        }catch (ex: Exception){
+            throw DomainException(ex.message.toString())
+        }
     }
+
+    suspend fun updateUserAddress(userAddressRequest: UpdateUserAddressRequest): Unit = dbQuery {
+        try {
+            val isUserExistedDB = isUserExists(userAddressRequest.userId)
+            if (!isUserExistedDB) {
+                throw ResourceNotFoundException("User not found")
+            }
+            UserAddressTable.update(where = {UserAddressTable.id eq userAddressRequest.id}) {
+                it[userId] = userAddressRequest.userId
+                it[addressType] = userAddressRequest.addressType
+                it[street] = userAddressRequest.street
+                it[city] = userAddressRequest.city
+                it[state] = userAddressRequest.state
+                it[country] = userAddressRequest.country
+                it[zipCode] = userAddressRequest.zipCode
+                it[nearBy] = userAddressRequest.nearBy
+                it[comment] = userAddressRequest.comment
+                it[isPrimary] = userAddressRequest.isPrimary
+            }
+        }catch (ex: ResourceNotFoundException) {
+            throw ResourceNotFoundException(ex.message.toString())
+        } catch (ex: ExposedSQLException) {
+            throw DomainException(ex.message.toString())
+        }catch (ex: Exception){
+            throw DomainException(ex.message.toString())
+        }
+    }
+
+
 }

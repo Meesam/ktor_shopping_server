@@ -49,5 +49,7 @@ dependencies {
     implementation("org.jetbrains.exposed:exposed-kotlin-datetime")
     implementation("org.apache.commons:commons-email:1.5")
     implementation("com.google.firebase:firebase-admin:9.2.0")
+    implementation("io.ktor:ktor-server-openapi:3.3.0")
+
 
 }

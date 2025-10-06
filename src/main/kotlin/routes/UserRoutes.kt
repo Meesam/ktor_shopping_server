@@ -3,6 +3,8 @@ package com.meesam.routes
 import com.meesam.domain.dto.ChangePasswordRequest
 import com.meesam.domain.dto.DeleteProductFileRequest
 import com.meesam.domain.dto.DeleteProfilePictureRequest
+import com.meesam.domain.dto.UpdateUserAddressRequest
+import com.meesam.domain.dto.UserAddressRequest
 import com.meesam.domain.dto.UserResponse
 import com.meesam.domain.dto.UserUpdateRequest
 import com.meesam.services.AuthService
@@ -19,6 +21,7 @@ import io.ktor.server.request.receive
 import io.ktor.server.request.receiveMultipart
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
+import io.ktor.server.routing.delete
 import io.ktor.server.routing.post
 import io.ktor.server.routing.route
 import io.ktor.util.reflect.TypeInfo
@@ -105,8 +108,39 @@ fun Route.userRoutes(service: AuthService = AuthService(), userService: UserServ
                 call.respond(HttpStatusCode.OK, result ?: "")
             }
         }
+
+        route("/addAddress"){
+            post {
+                val body = call.receive<UserAddressRequest>()
+                val errors = BeanValidation.errorsFor(body)
+                if (errors.isNotEmpty()) {
+                    call.respond(HttpStatusCode.UnprocessableEntity, mapOf("errors" to errors))
+                    return@post
+                }
+                userService.addUserAddress(body)
+                call.respond(HttpStatusCode.OK)
+            }
+        }
+
+        route("/deleteAddress"){
+            delete {
+                val addressId = call.request.queryParameters["addressId"]?.toLongOrNull() ?: -1
+                userService.deleteUserAddress(addressId)
+                call.respond(HttpStatusCode.NoContent)
+            }
+        }
+
+        route("/updateAddress"){
+            post {
+                val body = call.receive<UpdateUserAddressRequest>()
+                val errors = BeanValidation.errorsFor(body)
+                if (errors.isNotEmpty()) {
+                    call.respond(HttpStatusCode.UnprocessableEntity, mapOf("errors" to errors))
+                    return@post
+                }
+                userService.updateUserAddress(body)
+                call.respond(HttpStatusCode.OK)
+            }
+        }
     }
-
-
-
 }

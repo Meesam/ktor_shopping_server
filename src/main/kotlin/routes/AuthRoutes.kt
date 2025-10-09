@@ -189,7 +189,7 @@ fun Route.authRoutes(
                     return@post
                 }
                 val result = service.forgotPassword(body)
-                val resetLink = "$frontendUrl/changePassword?email=$result"
+                val resetLink = "$frontendUrl/change-password?email=$result"
                 val emailDetails = EmailDetails(
                     toAddress = body.email.trim().lowercase(),
                     subject = "Forgot password request",

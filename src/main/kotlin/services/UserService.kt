@@ -66,15 +66,15 @@ class UserService(
         return null
     }
 
-    suspend fun addUserAddress(userAddressRequest: UserAddressRequest): Unit{
+    suspend fun addUserAddress(userAddressRequest: UserAddressRequest){
         return userRepository.addUserAddress(userAddressRequest)
     }
 
-    suspend fun deleteUserAddress(addressId: Long):Unit{
+    suspend fun deleteUserAddress(addressId: Long){
         return userRepository.deleteUserAddress(addressId)
     }
 
-    suspend fun updateUserAddress(userAddressRequest: UpdateUserAddressRequest): Unit{
+    suspend fun updateUserAddress(userAddressRequest: UpdateUserAddressRequest){
         return userRepository.updateUserAddress(userAddressRequest)
     }
 }

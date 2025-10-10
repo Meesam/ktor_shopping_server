@@ -15,6 +15,8 @@ data class ProductResponse(
     val quantity: Int = 0,
     val createdAt: kotlinx.datetime.LocalDateTime,
     val isActive: Boolean,
-    //val productImages: List<ProductImagesResponse> = emptyList(),
-    //val productAttributes: List<ProductAttributesResponse> = emptyList()
+    val productImages: Long? = null,
+    val productAttributes: Long? = null,
+    val productImagesList: List<ProductImagesResponse>? = emptyList(),
+    val productAttributesList: List<ProductAttributesResponse>? = emptyList()
 )

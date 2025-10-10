@@ -24,4 +24,7 @@ class ProductService(
     suspend fun updateProduct(updateProductRequest: UpdateProductRequest): Unit{
         return productRepository.updateProduct(updateProductRequest)
     }
+    suspend fun getProductById(productId: Long): ProductResponse {
+        return productRepository.getProductById(productId)
+    }
 }

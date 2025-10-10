@@ -1,10 +1,14 @@
 package com.meesam.data.repositories
 
 import com.meesam.data.db.DatabaseFactory.dbQuery
+import com.meesam.data.tables.AttributeTable
 import com.meesam.data.tables.CategoryTable
 import com.meesam.data.tables.ProductAttributesTable
 import com.meesam.data.tables.ProductImagesTable
 import com.meesam.data.tables.ProductTable
+import com.meesam.domain.dto.ProductAttributeResponse
+import com.meesam.domain.dto.ProductAttributesResponse
+import com.meesam.domain.dto.ProductImagesResponse
 import com.meesam.domain.dto.ProductRequest
 import com.meesam.domain.dto.ProductResponse
 import com.meesam.domain.dto.UpdateProductRequest
@@ -16,8 +20,10 @@ import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.exposed.exceptions.ExposedSQLException
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.and
+import org.jetbrains.exposed.sql.count
 import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.insert
+import org.jetbrains.exposed.sql.leftJoin
 import org.jetbrains.exposed.sql.update
 
 class ProductRepository {
@@ -50,6 +56,8 @@ class ProductRepository {
 
     suspend fun getAllProduct(): List<ProductResponse> = dbQuery {
         try {
+            val attributeCount = ProductAttributesTable.productId.count()
+            val productImageCount = ProductImagesTable.id.count()
             ProductTable
                 .leftJoin(CategoryTable)
                 .leftJoin(ProductImagesTable)
@@ -63,9 +71,13 @@ class ProductRepository {
                     ProductTable.categoryId,
                     ProductTable.createdAt,
                     ProductTable.isActive,
-                    CategoryTable.title
+                    CategoryTable.title,
+                    CategoryTable.id,
+                    attributeCount,
+                    productImageCount
                 )
                 .where { CategoryTable.isActive eq true }
+                .groupBy(ProductTable.id, ProductTable.title, CategoryTable.title, CategoryTable.id)
                 .map {
                     ProductResponse(
                         id = it[ProductTable.id],
@@ -76,7 +88,9 @@ class ProductRepository {
                         isActive = it[ProductTable.isActive],
                         categoryId = it[ProductTable.categoryId],
                         categoryName = it[CategoryTable.title],
-                        createdAt = it[ProductTable.createdAt]
+                        createdAt = it[ProductTable.createdAt],
+                        productImages = it[productImageCount],
+                        productAttributes = it[attributeCount]
                     )
                 }.toList()
         } catch (e: ExposedSQLException) {
@@ -129,12 +143,22 @@ class ProductRepository {
         }
     }
 
-    suspend fun getAllProductById(productId: Long): ProductResponse = dbQuery {
+    suspend fun getProductById(productId: Long): ProductResponse = dbQuery {
         try {
-            ProductTable
-                .leftJoin(CategoryTable)
-                .leftJoin(ProductImagesTable)
-                .leftJoin(ProductAttributesTable)
+            val productsRows = ProductTable
+                .leftJoin(CategoryTable, onColumn = { ProductTable.categoryId }, otherColumn = { CategoryTable.id })
+                .leftJoin(
+                    ProductImagesTable,
+                    onColumn = { ProductTable.id },
+                    otherColumn = { ProductImagesTable.productId })
+                .leftJoin(
+                    ProductAttributesTable,
+                    onColumn = { ProductTable.id },
+                    otherColumn = { ProductAttributesTable.productId })
+                .leftJoin(
+                    AttributeTable,
+                    onColumn = { ProductAttributesTable.attributeId },
+                    otherColumn = { AttributeTable.id })
                 .select(
                     ProductTable.id,
                     ProductTable.title,
@@ -144,22 +168,60 @@ class ProductRepository {
                     ProductTable.categoryId,
                     ProductTable.createdAt,
                     ProductTable.isActive,
-                    CategoryTable.title
-                )
-                .where { CategoryTable.isActive eq true and (CategoryTable.id eq productId) }
-                .map {
-                    ProductResponse(
-                        id = it[ProductTable.id],
-                        title = it[ProductTable.title],
-                        description = it[ProductTable.description] ?: "No Description",
-                        quantity = it[ProductTable.quantity] ?: 0,
-                        price = it[ProductTable.price],
-                        isActive = it[ProductTable.isActive],
-                        categoryId = it[ProductTable.categoryId],
-                        categoryName = it[CategoryTable.title],
-                        createdAt = it[ProductTable.createdAt]
+                    CategoryTable.title,
+                    ProductAttributesTable.id,
+                    ProductAttributesTable.productId,
+                    ProductAttributesTable.attributeId,
+                    AttributeTable.title,
+                    ProductAttributesTable.value,
+                    ProductAttributesTable.quantity,
+                    ProductAttributesTable.price,
+                    ProductImagesTable.imageUrl,
+                    ProductImagesTable.isDefaultImage
+                ).where { CategoryTable.isActive eq true and (ProductTable.id eq productId) }
+                .toList()
+
+            val productRow = productsRows.first()
+
+            val productAttribute = productsRows
+                .filter { row -> row.getOrNull(ProductAttributesTable.id) != null }
+                .map { row ->
+                    ProductAttributesResponse(
+                        id = row[ProductAttributesTable.id],
+                        productId = row[ProductAttributesTable.productId],
+                        attributeId = row[ProductAttributesTable.attributeId],
+                        attributeTitle = row[AttributeTable.title],
+                        attributeValue = row[ProductAttributesTable.value],
+                        attributeQuantity = row[ProductAttributesTable.quantity] ?: 0,
+                        attributePrice = row[ProductAttributesTable.price] ?: 0.0
                     )
-                }.singleOrNull() ?: throw ResourceNotFoundException("Product not found")
+                }
+
+            val productImages = productsRows
+                .filter { row -> row.getOrNull(ProductImagesTable.id) != null }
+                .map { row ->
+                    ProductImagesResponse(
+                        id = row[ProductAttributesTable.id],
+                        productId = row[ProductAttributesTable.productId],
+                        imageUrl = row[ProductImagesTable.imageUrl],
+                        isDefaultImage = row[ProductImagesTable.isDefaultImage]
+                    )
+                }
+
+            ProductResponse(
+                id = productRow[ProductTable.id],
+                title = productRow[ProductTable.title],
+                description = productRow[ProductTable.description] ?: "No Description",
+                quantity = productRow[ProductTable.quantity] ?: 0,
+                price = productRow[ProductTable.price],
+                isActive = productRow[ProductTable.isActive],
+                categoryId = productRow[ProductTable.categoryId],
+                categoryName = productRow[CategoryTable.title],
+                createdAt = productRow[ProductTable.createdAt],
+                productAttributesList = productAttribute,
+                productImagesList = productImages
+            )
+
         } catch (e: ExposedSQLException) {
             throw DomainException(e.message.toString())
         } catch (e: Exception) {

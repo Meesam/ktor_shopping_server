@@ -22,6 +22,8 @@ import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransacti
 import org.jetbrains.exposed.sql.transactions.transaction
 
 import kotlinx.coroutines.Dispatchers
+import org.jetbrains.exposed.sql.StdOutSqlLogger
+import org.jetbrains.exposed.sql.addLogger
 import java.sql.Connection
 
 object DatabaseFactory {
@@ -66,6 +68,9 @@ object DatabaseFactory {
     }
 
     suspend fun <T> dbQuery(block: suspend () -> T): T =
-        newSuspendedTransaction(Dispatchers.IO) { block() }
+        newSuspendedTransaction(Dispatchers.IO) {
+            addLogger(StdOutSqlLogger)
+            block()
+        }
 
 }

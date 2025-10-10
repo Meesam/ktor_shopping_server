@@ -102,5 +102,13 @@ fun Route.productRoutes(service: ProductService = ProductService(), productImage
                 call.respond(HttpStatusCode.OK)
             }
         }
+
+        route("/get-by-id") {
+            get {
+                val productId = call.request.queryParameters["productId"]?.toLongOrNull() ?: -1
+                val result = service.getProductById(productId)
+                call.respond(status = HttpStatusCode.OK,result)
+            }
+        }
     }
 }

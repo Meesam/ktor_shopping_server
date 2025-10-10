@@ -1,9 +1,6 @@
 package com.meesam.domain.dto
 
-import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
-import java.math.BigDecimal
-import java.time.LocalDateTime
 
 @Serializable
 data class ProductAttributeResponse(
@@ -13,6 +10,6 @@ data class ProductAttributeResponse(
     val attributeTitle: String,
     val values: String?,
     val price: Double?,
-    val createdAt: Instant
+    val createdAt: kotlinx.datetime.LocalDateTime
 )
 

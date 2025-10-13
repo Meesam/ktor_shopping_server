@@ -155,7 +155,7 @@ fun Route.authRoutes(
                     return@post
                 }
                 service.activateUserByOtp(body)
-                call.respond(HttpStatusCode.OK, "User activated successfully")
+                call.respond(HttpStatusCode.OK)
             }
         }
 

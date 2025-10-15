@@ -89,7 +89,7 @@ class ProductAttributeRepository {
 
     suspend fun deleteProductAttribute(attributeId: Long): Unit = dbQuery {
         try {
-            ProductAttributesTable.select(ProductAttributesTable.id).where { AttributeTable.id eq attributeId }
+            ProductAttributesTable.select(ProductAttributesTable.id).where { ProductAttributesTable.id eq attributeId }
                 .singleOrNull()
                 ?: throw ResourceNotFoundException("Product Attribute not found")
             ProductAttributesTable.deleteWhere {

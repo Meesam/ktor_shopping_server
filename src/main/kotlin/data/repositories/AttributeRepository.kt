@@ -44,6 +44,34 @@ class AttributeRepository {
         }
     }
 
+    suspend fun getAllAttributeByCategory(categoryId: Long): List<AttributeResponse> = dbQuery {
+        try {
+            AttributeTable.innerJoin(CategoryTable)
+                .select(
+                    AttributeTable.id,
+                    AttributeTable.title,
+                    AttributeTable.categoryId,
+                    AttributeTable.createdAt,
+                    CategoryTable.title
+                ).where {
+                    (CategoryTable.isActive eq true
+                    and (AttributeTable.categoryId eq categoryId))
+                }.map {
+                    AttributeResponse(
+                        id = it[AttributeTable.id],
+                        title = it[AttributeTable.title],
+                        categoryId = it[AttributeTable.categoryId],
+                        createdAt = it[AttributeTable.createdAt],
+                        categoryName = it[CategoryTable.title]
+                    )
+                }
+        } catch (ex: ExposedSQLException) {
+            throw DomainException(ex.message.toString())
+        } catch (ex: Exception) {
+            throw DomainException(ex.message.toString())
+        }
+    }
+
     suspend fun createAttribute(attributeRequest: AttributeRequest): Unit = dbQuery {
         try {
             val categoryRow = CategoryTable

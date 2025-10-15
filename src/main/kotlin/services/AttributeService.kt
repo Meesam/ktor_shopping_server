@@ -23,4 +23,8 @@ class AttributeService(
     suspend fun updateAttribute(updateAttributeRequest: UpdateAttributeRequest): Unit{
         return attributeRepository.updateAttribute(updateAttributeRequest)
     }
+
+    suspend fun getAllAttributeByCategory(categoryId: Long): List<AttributeResponse>{
+        return attributeRepository.getAllAttributeByCategory(categoryId)
+    }
 }

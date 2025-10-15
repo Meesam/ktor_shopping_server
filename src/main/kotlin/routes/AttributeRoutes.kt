@@ -62,5 +62,13 @@ fun Route.attributeRoutes(service: AttributeService = AttributeService()) {
                 call.respond(HttpStatusCode.OK, result)
             }
         }
+
+        route("/get-by-id"){
+            get {
+                val categoryId = call.request.queryParameters["categoryId"]?.toLongOrNull() ?: -1
+                val result = service.getAllAttributeByCategory(categoryId)
+                call.respond(HttpStatusCode.OK, result)
+            }
+        }
     }
 }

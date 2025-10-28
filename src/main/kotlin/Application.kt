@@ -11,7 +11,6 @@ import com.meesam.plugins.configureSerialization
 import com.meesam.plugins.configureStatusPages
 import com.meesam.plugins.loadEmailConfig
 import com.meesam.services.EmailService
-import io.ktor.http.ContentType
 import io.ktor.server.application.*
 
 fun main(args: Array<String>) {
@@ -29,6 +28,10 @@ fun Application.module() {
     configureHTTP()
     configureSecurity()
     configureFirebase()
+    //RedisClientManager.initialize()
+    //environment.monitor.subscribe(ApplicationStopping) {
+       // RedisClientManager.close()
+   // }
     configureRouting()
 }
 

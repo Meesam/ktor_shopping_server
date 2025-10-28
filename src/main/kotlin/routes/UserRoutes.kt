@@ -25,6 +25,7 @@ import io.ktor.server.routing.delete
 import io.ktor.server.routing.post
 import io.ktor.server.routing.route
 import io.ktor.util.reflect.TypeInfo
+import java.io.File
 import java.util.UUID
 
 fun Route.userRoutes(service: AuthService = AuthService(), userService: UserService = UserService()) {
@@ -51,44 +52,56 @@ fun Route.userRoutes(service: AuthService = AuthService(), userService: UserServ
 
         route("/update"){
             post {
+                val body = call.receive<UserUpdateRequest>()
+                val errors = BeanValidation.errorsFor(body)
+                if (errors.isNotEmpty()) {
+                    call.respond(HttpStatusCode.UnprocessableEntity, mapOf("errors" to errors))
+                    return@post
+                }
+               val result =  userService.updateUserDetails(body, null)
+                call.respond(HttpStatusCode.OK, result ?: "")
+            }
+        }
+
+        route("/addProfileImage"){
+            post {
                 val multipart = call.receiveMultipart()
                 var userId: Long? = null
-                var name: String? = null
                 var fileName:String? = null
-                var contentType: String? = null
-                var fileBytes: ByteArray? = null
-                var dob: kotlinx.datetime.LocalDate? = null
                 var result: UserResponse? = null
+                var fileUrl: String? = null
                 multipart.forEachPart { part ->
                     when (part) {
                         is PartData.FormItem -> {
                             val valueType = part.name.toString()
                             when(valueType){
-                               "userId" -> {
-                                  userId = part.value.toLong()
-                               }
-                              "name" -> {
-                                  name = part.value
-                              }
-                             "dob" -> {
-                                  dob = kotlinx.datetime.LocalDate.parse(part.value)
-                              }
+                                "userId" -> {
+                                    userId = part.value.toLong()
+                                }
                             }
                         }
                         is PartData.FileItem ->{
                             fileName = part.originalFileName ?: UUID.randomUUID().toString()
-                            contentType = part.contentType?.toString() ?: "application/octet-stream"
-                            fileBytes = part.streamProvider().readBytes()
+
+                            val uploadDir = File("uploads/images")
+                            uploadDir.mkdirs()
+                            val file = File(uploadDir, fileName) // Save to a public directory
+                            // Write the bytes to the file
+                            part.streamProvider().use { inputStream ->
+                                file.outputStream().buffered().use { outputStream ->
+                                    inputStream.copyTo(outputStream)
+                                }
+                            }
+                            // Construct the public URL
+                            fileUrl = "http://localhost:8080/images/$fileName"
                         }
                         else -> {}
                     }
-                    if(userId !=null && fileName !=null && contentType !=null && fileBytes !=null) {
+                    if(userId !=null && fileUrl !=null) {
                         val updateUserRequest = UserUpdateRequest(
                             id = userId,
-                            name = name,
-                            dob = dob
                         )
-                       result =  userService.updateUserDetails(updateUserRequest, fileBytes, fileName, contentType)
+                        result =  userService.addUserProfileImage(updateUserRequest, fileUrl)
                     }
                     part.dispose() // Important: Dispose of the part to free resources
                 }

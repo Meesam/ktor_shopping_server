@@ -9,9 +9,14 @@ import com.meesam.routes.userCartRoutes
 import com.meesam.routes.userRoutes
 import io.ktor.server.application.*
 import io.ktor.server.auth.authenticate
+import io.ktor.server.http.content.files
+import io.ktor.server.http.content.static
+import io.ktor.server.http.content.staticFiles
+import io.ktor.server.http.content.staticRootFolder
 import io.ktor.server.plugins.swagger.swaggerUI
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import java.io.File
 
 fun Application.configureRouting() {
     routing {
@@ -32,6 +37,10 @@ fun Application.configureRouting() {
         swaggerUI(path = "swagger", swaggerFile = "openapi/documentation.yaml") {
             // Optional: Customize Swagger UI, e.g., specify a different version
             version = "4.15.5"
+        }
+
+        staticFiles("/images", File("uploads/images")) {
+            // Optional: you can configure caching, etc. here
         }
     }
 }

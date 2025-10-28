@@ -7,6 +7,11 @@ import com.meesam.domain.exceptionhandler.DomainException
 import com.meesam.domain.exceptionhandler.ResourceNotFoundException
 import com.meesam.services.firebase.FirebaseStorageService
 import org.jetbrains.exposed.exceptions.ExposedSQLException
+//import java.io.File
+import java.nio.file.Files
+import java.nio.file.FileSystem
+import java.nio.file.Paths
+import kotlin.io.path.deleteIfExists
 
 class ProductImagesService(
     private val firebaseStorageService: FirebaseStorageService = FirebaseStorageService(),
@@ -29,6 +34,20 @@ class ProductImagesService(
         }
     }
 
+    suspend fun uploadProductImageOnLocalServer(
+        productId: Long?,
+        fileUrl: String,
+    ): Unit {
+
+        if (fileUrl.isNotEmpty()) {
+            val productImageRequest = ProductImageRequest(
+                productId = productId,
+                imagePath = fileUrl
+            )
+            productImageRepository.addNewProductImage(productImageRequest)
+        }
+    }
+
     suspend fun deleteProductFile(deleteProductFileRequest: DeleteProductFileRequest) {
         try {
             val productImage =
@@ -38,6 +57,32 @@ class ProductImagesService(
                 if (result) {
                     return productImageRepository.deleteProductImage(deleteProductFileRequest)
                 }
+            } else {
+                throw ResourceNotFoundException("Product Image not found")
+            }
+        } catch (ex: ResourceNotFoundException) {
+            throw ResourceNotFoundException(ex.message.toString())
+        } catch (ex: ExposedSQLException) {
+            throw DomainException(ex.message.toString())
+        } catch (ex: Exception) {
+            throw DomainException(ex.message.toString())
+        }
+    }
+
+    suspend fun deleteProductLocalFile(deleteProductFileRequest: DeleteProductFileRequest) {
+        try {
+            val productImage =
+                productImageRepository.isDeletingProductImageIsExist(deleteProductFileRequest.productImageId)
+            if (productImage) {
+                val uploadDir = "uploads/images"
+                val fileToDelete = Paths.get(uploadDir, deleteProductFileRequest.image)
+                try {
+                    fileToDelete.deleteIfExists()
+                    return productImageRepository.deleteProductImage(deleteProductFileRequest)
+                }catch (e: Exception){
+                    throw DomainException(e.message.toString())
+                }
+
             } else {
                 throw ResourceNotFoundException("Product Image not found")
             }

@@ -19,6 +19,7 @@ import io.ktor.server.routing.delete
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.route
+import java.io.File
 import java.util.UUID
 import kotlin.text.toLongOrNull
 
@@ -72,25 +73,34 @@ fun Route.productRoutes(service: ProductService = ProductService(), productImage
              post {
                  val multipart = call.receiveMultipart()
                  var productId: Long? = null
-                 var fileName: String? = null
-                 var contentType: String? = null
-                 var fileBytes: ByteArray? = null
+                 var fileUrl: String? = null
+
                  multipart.forEachPart { part ->
                      when (part) {
                          is PartData.FormItem -> {
                              productId = part.value.toLong()
                          }
                         is PartData.FileItem ->{
-                            fileName = part.originalFileName ?: UUID.randomUUID().toString()
-                            contentType = part.contentType?.toString() ?: "application/octet-stream"
-                            fileBytes = part.streamProvider().readBytes()
+                            val fileExtension = part.originalFileName?.takeLastWhile { it != '.' }
+                            val fileName = UUID.randomUUID().toString() + "." + fileExtension // Generate unique name
+                            val uploadDir = File("uploads/images")
+                            uploadDir.mkdirs()
+                            val file = File(uploadDir, fileName) // Save to a public directory
+                            // Write the bytes to the file
+                            part.streamProvider().use { inputStream ->
+                                file.outputStream().buffered().use { outputStream ->
+                                    inputStream.copyTo(outputStream)
+                                }
+                            }
+                            // Construct the public URL
+                            fileUrl = "http://localhost:8080/images/$fileName"
                          }
                          else -> {}
                      }
-                     if(productId !=null && fileName !=null && contentType !=null && fileBytes !=null) {
-                         productImagesService.uploadProductImage(productId,fileBytes, fileName, contentType)
+                     if(productId !=null && fileUrl !=null ) {
+                         productImagesService.uploadProductImageOnLocalServer(productId,fileUrl)
                      }
-                     part.dispose() // Important: Dispose of the part to free resources
+                     part.dispose()
                  }
                  call.respond(HttpStatusCode.OK)
              }
@@ -98,7 +108,7 @@ fun Route.productRoutes(service: ProductService = ProductService(), productImage
         route("/deleteImage"){
             post {
                 val body = call.receive<DeleteProductFileRequest>()
-                productImagesService.deleteProductFile(body)
+                productImagesService.deleteProductLocalFile(body)
                 call.respond(HttpStatusCode.OK)
             }
         }

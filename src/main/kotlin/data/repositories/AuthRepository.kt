@@ -90,6 +90,10 @@ class AuthRepository {
                 name = row[name],
                 email = row[email],
                 role = row[role],
+                dob = row[dob],
+                profilePicUrl = row[profilePicUrl],
+                phone = row[phone],
+                lastLoginAt = row[lastLoginAt]
             )
         }
     }
@@ -103,6 +107,7 @@ class AuthRepository {
             with(userRequest) {
                 val insertedUser = UserTable.insert {
                     it[name] = userRequest.name
+                    it[phone]=userRequest.phone
                     it[email] = userRequest.email.trim().lowercase()
                     it[password] = passwordHash
                     it[role] = userRequest.role ?: "User"
@@ -285,7 +290,7 @@ class AuthRepository {
 
     suspend fun getUserDetailById(userId: Long): UserResponse? = dbQuery {
         with(UserTable) {
-            val row = select(id, name, email, role, dob, lastLoginAt, createdAt, profilePicUrl).where { id eq userId }
+            val row = select(id, name, email, role, dob, lastLoginAt, createdAt, profilePicUrl,phone).where { id eq userId }
                 .singleOrNull()
                 ?: throw NotFoundException("User not found")
 
@@ -294,6 +299,7 @@ class AuthRepository {
                 name = row[name],
                 email = row[email],
                 role = row[role],
+                phone = row[phone],
                 //lastLoginAt = row[lastLoginAt] as Instant?,
                 profilePicUrl = row[profilePicUrl],
             )

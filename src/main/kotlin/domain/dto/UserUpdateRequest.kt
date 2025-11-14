@@ -10,5 +10,6 @@ data class UserUpdateRequest(
     val id: Long = 0,
     val name: String? = null,
     val dob: kotlinx.datetime.LocalDate? = null,
-    val profilePicUrl: String? = null
+    val profilePicUrl: String? = null,
+    val phone: String? = null,
 )

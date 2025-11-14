@@ -23,5 +23,6 @@ data class UserRequest(
     val role:String? = null,
 
     val dob: Instant? = null,
-    val lastLoginAt: Instant? = null
+    val lastLoginAt: Instant? = null,
+    val phone: String? = null,
 )

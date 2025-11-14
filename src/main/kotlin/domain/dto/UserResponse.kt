@@ -11,5 +11,6 @@ data class UserResponse(
     val lastLoginAt: kotlinx.datetime.LocalDateTime? = null,
     val role: String,
     val profilePicUrl: String? = null,
-    val otp: Int? = null
+    val otp: Int? = null,
+    val phone: String? = null,
 )

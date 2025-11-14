@@ -8,14 +8,16 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class UserAddressResponse(
     val id: Long? = null,
-    val address: String = "",
-    val city: String = "",
-    val state: String = "",
-    val pin: String = "",
-    val street:String = "",
-    val nearBy:String? = null,
-    val country:String? = null,
+    val city: String? = null,
+    val state: String? = null,
+    val pin: String? = null,
+    val street: String? = null,
+    val nearBy: String? = null,
+    val country: String? = null,
     val userId: Long? = null,
-    val userName:String = "",
-    val createdAt: LocalDateTime? = null
+    val contactName: String? = null,
+    val isPrimary: Boolean = false,
+    val contactNumber: String? = null,
+    val createdAt: LocalDateTime? = null,
+    val addressType: String? = null
 )

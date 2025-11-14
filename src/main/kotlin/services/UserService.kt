@@ -2,8 +2,10 @@ package com.meesam.services
 
 import com.meesam.data.repositories.UserRepository
 import com.meesam.domain.dto.DeleteProfilePictureRequest
+import com.meesam.domain.dto.TogglePrimaryAddressRequest
 import com.meesam.domain.dto.UpdateUserAddressRequest
 import com.meesam.domain.dto.UserAddressRequest
+import com.meesam.domain.dto.UserAddressResponse
 import com.meesam.domain.dto.UserResponse
 import com.meesam.domain.dto.UserUpdateRequest
 import com.meesam.domain.exceptionhandler.DomainException
@@ -101,5 +103,14 @@ class UserService(
 
     suspend fun updateUserAddress(userAddressRequest: UpdateUserAddressRequest){
         return userRepository.updateUserAddress(userAddressRequest)
+    }
+    suspend fun getUserDetails(id: Long): UserResponse{
+        return userRepository.getUserDetails(id)
+    }
+    suspend fun getAllUserAddress(userId: Long): List<UserAddressResponse>{
+        return userRepository.getAllUserAddress(userId)
+    }
+    suspend fun togglePrimaryAddress(togglePrimaryAddressRequest: TogglePrimaryAddressRequest){
+        return userRepository.togglePrimaryAddress(togglePrimaryAddressRequest)
     }
 }

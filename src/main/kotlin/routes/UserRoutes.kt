@@ -3,6 +3,7 @@ package com.meesam.routes
 import com.meesam.domain.dto.ChangePasswordRequest
 import com.meesam.domain.dto.DeleteProductFileRequest
 import com.meesam.domain.dto.DeleteProfilePictureRequest
+import com.meesam.domain.dto.TogglePrimaryAddressRequest
 import com.meesam.domain.dto.UpdateUserAddressRequest
 import com.meesam.domain.dto.UserAddressRequest
 import com.meesam.domain.dto.UserResponse
@@ -22,6 +23,7 @@ import io.ktor.server.request.receiveMultipart
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.delete
+import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.route
 import io.ktor.util.reflect.TypeInfo
@@ -45,21 +47,26 @@ fun Route.userRoutes(service: AuthService = AuthService(), userService: UserServ
                     call.respond(HttpStatusCode.Forbidden, "You are not allowed to change password of other users")
                 } else {
                     service.changePassword(body)
-                    call.respond(HttpStatusCode.OK, "Password changed successfully")
+                    call.respond(HttpStatusCode.NoContent)
                 }
             }
         }
 
         route("/update"){
             post {
-                val body = call.receive<UserUpdateRequest>()
-                val errors = BeanValidation.errorsFor(body)
-                if (errors.isNotEmpty()) {
-                    call.respond(HttpStatusCode.UnprocessableEntity, mapOf("errors" to errors))
-                    return@post
+                try {
+                    val body = call.receive<UserUpdateRequest>()
+                    val errors = BeanValidation.errorsFor(body)
+                    if (errors.isNotEmpty()) {
+                        call.respond(HttpStatusCode.UnprocessableEntity, mapOf("errors" to errors))
+                        return@post
+                    }
+                    val result =  userService.updateUserDetails(body, null)
+                    call.respond(HttpStatusCode.OK, result ?: "")
+                }catch (e:Exception){
+                    call.respond(HttpStatusCode.BadRequest, e.message ?: "")
                 }
-               val result =  userService.updateUserDetails(body, null)
-                call.respond(HttpStatusCode.OK, result ?: "")
+
             }
         }
 
@@ -93,7 +100,7 @@ fun Route.userRoutes(service: AuthService = AuthService(), userService: UserServ
                                 }
                             }
                             // Construct the public URL
-                            fileUrl = "http://localhost:8080/images/$fileName"
+                            fileUrl = "http://192.168.1.6:8080/images/$fileName"
                         }
                         else -> {}
                     }
@@ -105,7 +112,8 @@ fun Route.userRoutes(service: AuthService = AuthService(), userService: UserServ
                     }
                     part.dispose() // Important: Dispose of the part to free resources
                 }
-                call.respond(HttpStatusCode.OK, result ?: "")
+                val user = userService.getUserDetails(userId!!)
+                call.respond(HttpStatusCode.OK, user)
             }
         }
 
@@ -143,6 +151,14 @@ fun Route.userRoutes(service: AuthService = AuthService(), userService: UserServ
             }
         }
 
+        route("/getAllAddress"){
+            get {
+                val userId = call.request.queryParameters["userId"]?.toLongOrNull() ?: -1
+                val result = userService.getAllUserAddress(userId)
+                call.respond(HttpStatusCode.OK, result)
+            }
+        }
+
         route("/updateAddress"){
             post {
                 val body = call.receive<UpdateUserAddressRequest>()
@@ -152,6 +168,19 @@ fun Route.userRoutes(service: AuthService = AuthService(), userService: UserServ
                     return@post
                 }
                 userService.updateUserAddress(body)
+                call.respond(HttpStatusCode.OK)
+            }
+        }
+
+        route("/togglePrimaryAddress"){
+            post {
+                val body = call.receive<TogglePrimaryAddressRequest>()
+                val errors = BeanValidation.errorsFor(body)
+                if (errors.isNotEmpty()) {
+                    call.respond(HttpStatusCode.UnprocessableEntity, mapOf("errors" to errors))
+                    return@post
+                }
+                userService.togglePrimaryAddress(body)
                 call.respond(HttpStatusCode.OK)
             }
         }

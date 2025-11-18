@@ -93,7 +93,7 @@ fun Route.productRoutes(service: ProductService = ProductService(), productImage
                                 }
                             }
                             // Construct the public URL
-                            fileUrl = "http://localhost:8080/images/$fileName"
+                            fileUrl = "http://192.168.1.10:8080/images/$fileName"
                          }
                          else -> {}
                      }

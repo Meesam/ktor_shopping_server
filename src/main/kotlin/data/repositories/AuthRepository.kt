@@ -299,9 +299,10 @@ class AuthRepository {
                 name = row[name],
                 email = row[email],
                 role = row[role],
-                phone = row[phone],
-                //lastLoginAt = row[lastLoginAt] as Instant?,
+                dob = row[dob],
                 profilePicUrl = row[profilePicUrl],
+                phone = row[phone],
+                lastLoginAt = row[lastLoginAt]
             )
         }
     }

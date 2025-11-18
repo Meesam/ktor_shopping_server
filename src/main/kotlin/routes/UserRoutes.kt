@@ -1,5 +1,6 @@
 package com.meesam.routes
 
+import com.meesam.domain.dto.AddUserCardRequest
 import com.meesam.domain.dto.ChangePasswordRequest
 import com.meesam.domain.dto.DeleteProductFileRequest
 import com.meesam.domain.dto.DeleteProfilePictureRequest
@@ -10,6 +11,7 @@ import com.meesam.domain.dto.UserResponse
 import com.meesam.domain.dto.UserUpdateRequest
 import com.meesam.services.AuthService
 import com.meesam.services.ProductImagesService
+import com.meesam.services.UserCardService
 import com.meesam.services.UserService
 import com.meesam.utills.BeanValidation
 import io.ktor.http.HttpStatusCode
@@ -30,7 +32,7 @@ import io.ktor.util.reflect.TypeInfo
 import java.io.File
 import java.util.UUID
 
-fun Route.userRoutes(service: AuthService = AuthService(), userService: UserService = UserService()) {
+fun Route.userRoutes(service: AuthService = AuthService(), userService: UserService = UserService(), userCardService: UserCardService = UserCardService()) {
     route("/user") {
         route("/changePassword") {
             post {
@@ -100,7 +102,7 @@ fun Route.userRoutes(service: AuthService = AuthService(), userService: UserServ
                                 }
                             }
                             // Construct the public URL
-                            fileUrl = "http://192.168.1.6:8080/images/$fileName"
+                            fileUrl = "http://192.168.1.10:8080/images/$fileName"
                         }
                         else -> {}
                     }
@@ -182,6 +184,35 @@ fun Route.userRoutes(service: AuthService = AuthService(), userService: UserServ
                 }
                 userService.togglePrimaryAddress(body)
                 call.respond(HttpStatusCode.OK)
+            }
+        }
+
+        route("/addNewCard"){
+            post {
+                val body = call.receive<AddUserCardRequest>()
+                val errors = BeanValidation.errorsFor(body)
+                if (errors.isNotEmpty()) {
+                    call.respond(HttpStatusCode.UnprocessableEntity, mapOf("errors" to errors))
+                    return@post
+                }
+                userCardService.addNewCard(body)
+                call.respond(HttpStatusCode.OK)
+            }
+        }
+
+        route("/getAllCard"){
+            get {
+                val userId = call.request.queryParameters["userId"]?.toLongOrNull() ?: -1
+                val result = userCardService.getUserCards(userId)
+                call.respond(HttpStatusCode.OK, result)
+            }
+        }
+
+        route("/deleteCard"){
+            delete {
+                val userId = call.request.queryParameters["userId"]?.toLongOrNull() ?: -1
+                userService.deleteUserAddress(userId)
+                call.respond(HttpStatusCode.NoContent)
             }
         }
     }

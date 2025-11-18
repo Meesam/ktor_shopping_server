@@ -37,12 +37,13 @@ class ProductImagesService(
     suspend fun uploadProductImageOnLocalServer(
         productId: Long?,
         fileUrl: String,
-    ): Unit {
-
+        color: String?
+    ) {
         if (fileUrl.isNotEmpty()) {
             val productImageRequest = ProductImageRequest(
                 productId = productId,
-                imagePath = fileUrl
+                imagePath = fileUrl,
+                color = color
             )
             productImageRepository.addNewProductImage(productImageRequest)
         }

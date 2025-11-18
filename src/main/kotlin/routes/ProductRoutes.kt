@@ -23,7 +23,14 @@ import java.io.File
 import java.util.UUID
 import kotlin.text.toLongOrNull
 
-fun Route.productRoutes(service: ProductService = ProductService(), productImagesService: ProductImagesService = ProductImagesService()) {
+fun Route.productRoutes(
+    service: ProductService = ProductService(),
+    productImagesService: ProductImagesService = ProductImagesService()
+) {
+    val config = environment.config
+    val host = config.property("ktor.deployment.host").getString()
+    val port = config.property("ktor.deployment.port").getString()
+
     route("/product") {
         route("/create") {
             post {
@@ -69,18 +76,29 @@ fun Route.productRoutes(service: ProductService = ProductService(), productImage
                 call.respond(HttpStatusCode.OK, result)
             }
         }
-         route("/uploadProductImage") {
-             post {
-                 val multipart = call.receiveMultipart()
-                 var productId: Long? = null
-                 var fileUrl: String? = null
+        route("/uploadProductImage") {
+            post {
+                val multipart = call.receiveMultipart()
+                var productId: Long? = null
+                var fileUrl: String? = null
+                var color: String? = null
 
-                 multipart.forEachPart { part ->
-                     when (part) {
-                         is PartData.FormItem -> {
-                             productId = part.value.toLong()
-                         }
-                        is PartData.FileItem ->{
+                multipart.forEachPart { part ->
+                    when (part) {
+                        is PartData.FormItem -> {
+                            val valueType = part.name.toString()
+                            when (valueType) {
+                                "productId" -> {
+                                    productId = part.value.toLong()
+                                }
+
+                                "color" -> {
+                                    color = part.value
+                                }
+                            }
+                        }
+
+                        is PartData.FileItem -> {
                             val fileExtension = part.originalFileName?.takeLastWhile { it != '.' }
                             val fileName = UUID.randomUUID().toString() + "." + fileExtension // Generate unique name
                             val uploadDir = File("uploads/images")
@@ -93,19 +111,20 @@ fun Route.productRoutes(service: ProductService = ProductService(), productImage
                                 }
                             }
                             // Construct the public URL
-                            fileUrl = "http://192.168.1.10:8080/images/$fileName"
-                         }
-                         else -> {}
-                     }
-                     if(productId !=null && fileUrl !=null ) {
-                         productImagesService.uploadProductImageOnLocalServer(productId,fileUrl)
-                     }
-                     part.dispose()
-                 }
-                 call.respond(HttpStatusCode.OK)
-             }
-         }
-        route("/deleteImage"){
+                            fileUrl = "$host:$port/images/$fileName"
+                        }
+
+                        else -> {}
+                    }
+                    if (productId != null && fileUrl != null && color != null) {
+                        productImagesService.uploadProductImageOnLocalServer(productId, fileUrl, color = color)
+                    }
+                    part.dispose()
+                }
+                call.respond(HttpStatusCode.OK)
+            }
+        }
+        route("/deleteImage") {
             post {
                 val body = call.receive<DeleteProductFileRequest>()
                 productImagesService.deleteProductLocalFile(body)
@@ -117,7 +136,7 @@ fun Route.productRoutes(service: ProductService = ProductService(), productImage
             get {
                 val productId = call.request.queryParameters["productId"]?.toLongOrNull() ?: -1
                 val result = service.getProductById(productId)
-                call.respond(status = HttpStatusCode.OK,result)
+                call.respond(status = HttpStatusCode.OK, result)
             }
         }
     }

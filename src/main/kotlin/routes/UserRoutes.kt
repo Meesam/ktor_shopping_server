@@ -33,6 +33,10 @@ import java.io.File
 import java.util.UUID
 
 fun Route.userRoutes(service: AuthService = AuthService(), userService: UserService = UserService(), userCardService: UserCardService = UserCardService()) {
+    val config = environment.config
+    val host = config.property("ktor.deployment.host").getString()
+    val port = config.property("ktor.deployment.port").getString()
+
     route("/user") {
         route("/changePassword") {
             post {
@@ -102,7 +106,7 @@ fun Route.userRoutes(service: AuthService = AuthService(), userService: UserServ
                                 }
                             }
                             // Construct the public URL
-                            fileUrl = "http://192.168.1.10:8080/images/$fileName"
+                            fileUrl =  "$host:$port/images/$fileName"
                         }
                         else -> {}
                     }

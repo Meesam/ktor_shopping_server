@@ -17,5 +17,8 @@ data class ProductImageRequest(
     @field:NotNull(message = "productId cannot be null")
     @field:Min(value = 1, message = "productId must be greater than zero")
     val productId: Long? = null,
+
+    val color:String? = null,
+
     val isDefaultImage: Boolean? = false
 )

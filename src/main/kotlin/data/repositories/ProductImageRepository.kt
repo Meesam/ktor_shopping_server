@@ -25,6 +25,7 @@ class ProductImageRepository {
                 ProductImagesTable.insert {
                     it[imageUrl] = productImageRequest.imagePath
                     it[productId] = productImageRequest.productId
+                    it[color] = productImageRequest.color
                     it[isDefaultImage] = productImageRequest.isDefaultImage ?: false
                 }
             }

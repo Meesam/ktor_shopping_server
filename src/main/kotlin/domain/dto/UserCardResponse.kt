@@ -5,6 +5,7 @@ import org.threeten.bp.Year
 
 @Serializable
 data class UserCardResponse(
+    val cardId: Long? = null,
     val name:String,
     val cardNumber: Long,
     val expiryMonth: Int,

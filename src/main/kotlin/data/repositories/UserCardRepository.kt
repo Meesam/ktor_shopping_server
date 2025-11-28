@@ -68,7 +68,8 @@ class UserCardRepository {
                     cardNumber = card[UserCardsTable.cardNumber],
                     expiryYear = card[UserCardsTable.expiredYear],
                     expiryMonth = card[UserCardsTable.expiredMonth],
-                    isActive = card[UserCardsTable.isActive]
+                    isActive = card[UserCardsTable.isActive],
+                    cardId = card[UserCardsTable.id]
                 )
             }
         } catch (ex: ResourceNotFoundException) {

@@ -214,8 +214,8 @@ fun Route.userRoutes(service: AuthService = AuthService(), userService: UserServ
 
         route("/deleteCard"){
             delete {
-                val userId = call.request.queryParameters["userId"]?.toLongOrNull() ?: -1
-                userService.deleteUserAddress(userId)
+                val cardId = call.request.queryParameters["cardId"]?.toLongOrNull() ?: -1
+                userCardService.deleteUserCard(cardId)
                 call.respond(HttpStatusCode.NoContent)
             }
         }
